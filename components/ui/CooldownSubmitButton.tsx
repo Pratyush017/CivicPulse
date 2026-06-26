@@ -20,6 +20,9 @@ export function CooldownSubmitButton() {
       setIsUploading(false);
       setShowSuccess(true);
       setCooldown(totalCooldown);
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setShowSuccess(false), 3000);
     }, 1000);
   };
 
@@ -30,12 +33,9 @@ export function CooldownSubmitButton() {
       timer = setInterval(() => {
         setCooldown((prev) => prev - 1);
       }, 1000);
-    } else if (cooldown === 0 && showSuccess) {
-      // 3. When timer reaches 0, clear success message and re-enable
-      setShowSuccess(false);
     }
     return () => clearInterval(timer);
-  }, [cooldown, showSuccess]);
+  }, [cooldown]);
 
   // Calculate progress for the ring indicator
   const progress = (cooldown / totalCooldown) * 100;

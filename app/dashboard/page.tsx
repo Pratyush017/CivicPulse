@@ -45,7 +45,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { SeverityBadge, getSeverityLevel } from "@/components/SeverityBadge";
+import { SeverityBadge } from "@/components/SeverityBadge";
 import { Toast } from "@/components/Toast";
 import { createClient } from "@/utils/supabase/client";
 import { LoginButton } from "@/components/ui/LoginButton";
@@ -232,6 +232,7 @@ export default function DashboardPage() {
       }
 
       setToast({ message: "Report deleted", type: "success" });
+      window.dispatchEvent(new CustomEvent("civicPointsUpdate"));
     } catch (err) {
       console.error(err);
       // Revert optimistic update
@@ -316,14 +317,15 @@ export default function DashboardPage() {
       
       // Notify LoginButton to refresh points
       window.dispatchEvent(new CustomEvent("civicPointsUpdate"));
-    } catch (err: any) {
-      if (err.name === "AbortError") {
+    } catch (err: unknown) {
+      const error = err as Error;
+      if (error.name === "AbortError") {
         console.log("Upload aborted by user");
         return;
       }
       console.error(err);
       setToast({
-        message: err instanceof Error ? err.message : "Something went wrong",
+        message: error.message || "Something went wrong",
         type: "error",
       });
       // Do NOT reset the form or close the dialog, let the user try again
@@ -647,6 +649,7 @@ export default function DashboardPage() {
                       ref={galleryInputRef}
                       type="file"
                       accept="image/*"
+                      capture="environment"
                       className="hidden"
                       onChange={(e) =>
                         handleFileChange(e.target.files?.[0] ?? null)
@@ -655,6 +658,7 @@ export default function DashboardPage() {
                   </div>
                 ) : (
                   <div className="relative flex flex-col">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={previewUrl}
                       alt="Preview"
@@ -990,6 +994,7 @@ export default function DashboardPage() {
               >
                 {verifyPreviewUrl ? (
                   <div className="relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={verifyPreviewUrl}
                       alt="Verification preview"
@@ -1026,6 +1031,7 @@ export default function DashboardPage() {
                   ref={verifyFileInputRef}
                   type="file"
                   accept="image/*"
+                  capture="environment"
                   className="hidden"
                   onChange={(e) =>
                     handleVerifyFileChange(e.target.files?.[0] ?? null)

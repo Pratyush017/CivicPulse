@@ -74,11 +74,14 @@ export function LoginButton() {
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
           {profile?.avatar_url && (
-            <img
-              src={profile.avatar_url}
-              alt="Avatar"
-              className="size-8 rounded-full border border-cyan-500/30 object-cover"
-            />
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={profile.avatar_url}
+                alt="Avatar"
+                className="size-8 rounded-full border border-cyan-500/30 object-cover"
+              />
+            </>
           )}
           <div className="flex flex-col">
             <span className="text-xs font-medium text-slate-300">

@@ -19,21 +19,52 @@ export async function DELETE(
       return NextResponse.json({ error: "Missing report ID" }, { status: 400 });
     }
 
-    // Delete the report if the user_id matches the authenticated user OR if it's a seed report (user_id is NULL)
-    const { data, error } = await supabase
+    // Fetch report to verify ownership before deletion
+    const { data: report, error: fetchError } = await supabase
+      .from("reports")
+      .select("id, user_id")
+      .eq("id", id)
+      .single();
+
+    if (fetchError || !report) {
+      return NextResponse.json({ error: "Report not found" }, { status: 404 });
+    }
+
+    if (report.user_id !== user.id && report.user_id !== null) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
+    // Delete the report
+    const { error: deleteError } = await supabase
       .from("reports")
       .delete()
-      .eq("id", id)
-      .or(`user_id.eq.${user.id},user_id.is.null`)
-      .select();
+      .eq("id", id);
 
-    if (error) {
-      console.error("Failed to delete report:", error);
+    if (deleteError) {
+      console.error("Failed to delete report:", deleteError);
       return NextResponse.json({ error: "Failed to delete report" }, { status: 500 });
     }
 
-    if (!data || data.length === 0) {
-      return NextResponse.json({ error: "Unauthorized or report not found" }, { status: 403 });
+    // If this was an authenticated user's report, deduct 10 points safely
+    if (report.user_id === user.id) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("civic_points")
+        .eq("id", user.id)
+        .single();
+
+      if (profile) {
+        // Calculate exactly how many points to deduct so we don't drop below 0
+        const pointsToDeduct = Math.min(10, profile.civic_points || 0);
+        if (pointsToDeduct > 0) {
+          const { error: rpcError } = await supabase.rpc("increment_civic_points", {
+            points_to_add: -pointsToDeduct,
+          });
+          if (rpcError) {
+            console.error("Failed to decrement points:", rpcError);
+          }
+        }
+      }
     }
 
     return NextResponse.json({ success: true });

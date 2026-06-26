@@ -24,8 +24,8 @@ export async function withGeminiRetry<T>(
     try {
       return await operation();
     } catch (error: unknown) {
-      const errStr = String((error as any)?.message || error);
-      
+      const err = error as Record<string, unknown>;
+      const errStr = String(err?.message || error);
       // If it's a quota exceeded error with a long wait, don't bother retrying with exponential backoff
       if (errStr.includes("RESOURCE_EXHAUSTED") || errStr.includes("Quota exceeded")) {
         throw error;
@@ -47,8 +47,8 @@ export async function withGeminiRetry<T>(
 }
 
 export function parseGeminiError(error: unknown): { message: string; status: number } {
-  const err = error as any;
-  let errMsg = err?.message || String(error);
+  const err = error as Record<string, unknown>;
+  const errMsg = String(err?.message || error);
   
   // Try parsing if it looks like JSON
   if (errMsg.includes('{"error":')) {
@@ -57,7 +57,7 @@ export function parseGeminiError(error: unknown): { message: string; status: num
       if (parsed.error?.status === "RESOURCE_EXHAUSTED" || parsed.error?.code === 429) {
         let retryDelayStr = "a minute";
         if (parsed.error.details) {
-          const retryInfo = parsed.error.details.find((d: any) => d['@type'] === 'type.googleapis.com/google.rpc.RetryInfo');
+          const retryInfo = parsed.error.details.find((d: Record<string, unknown>) => d['@type'] === 'type.googleapis.com/google.rpc.RetryInfo');
           if (retryInfo?.retryDelay) {
             retryDelayStr = retryInfo.retryDelay;
           }
