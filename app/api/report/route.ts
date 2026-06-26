@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI, Type } from "@google/genai";
+import { Type } from "@google/genai";
 import { z } from "zod";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/utils/supabase/server";
+import { getGeminiClient, withGeminiRetry, parseGeminiError } from "@/lib/gemini";
 
 // ---------------------------------------------------------------------------
 // 1. Zod schema — single source of truth for the Gemini response shape
 // ---------------------------------------------------------------------------
 const ReportAnalysisSchema = z.object({
+  is_valid_issue: z.boolean().describe("True if the image contains a reportable civic defect (e.g. pothole, graffiti, broken light). False if it is standard wear and tear, clean roads, blank walls, or unrelated."),
+  rejection_reason: z.string().describe("If is_valid_issue is false, explain why it was rejected. If true, return an empty string."),
   category: z
     .string()
     .describe(
@@ -41,6 +44,14 @@ function zodToGeminiSchema() {
   return {
     type: Type.OBJECT,
     properties: {
+      is_valid_issue: {
+        type: Type.BOOLEAN,
+        description: "True if the image contains a reportable civic defect. False if it is standard wear and tear, clean roads, blank walls, or unrelated.",
+      },
+      rejection_reason: {
+        type: Type.STRING,
+        description: "If is_valid_issue is false, explain why it was rejected. If true, return an empty string.",
+      },
       category: {
         type: Type.STRING,
         description:
@@ -62,7 +73,7 @@ function zodToGeminiSchema() {
           "A severity rating from 1 (cosmetic / minor) to 5 (critical / dangerous).",
       },
     },
-    required: ["category", "title", "description", "severity_score"],
+    required: ["is_valid_issue", "rejection_reason", "category", "title", "description", "severity_score"],
   };
 }
 
@@ -71,6 +82,13 @@ function zodToGeminiSchema() {
 // ---------------------------------------------------------------------------
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     // ---- Parse multipart form data ----
     const formData = await request.formData();
     const imageFile = formData.get("image") as File | null;
@@ -100,7 +118,7 @@ export async function POST(request: NextRequest) {
     const mimeType = imageFile.type || "image/jpeg";
 
     // ---- Upload to Supabase Storage ----
-    const fileName = `${Date.now()}-${imageFile.name.replace(/\s+/g, "_")}`;
+    const fileName = `${crypto.randomUUID()}.png`;
 
     const { error: uploadError } = await supabase.storage
       .from("issue_images")
@@ -121,59 +139,76 @@ export async function POST(request: NextRequest) {
       data: { publicUrl },
     } = supabase.storage.from("issue_images").getPublicUrl(fileName);
 
-    // ---- Call Gemini 1.5 Flash with structured output ----
-    const apiKey = process.env.GOOGLE_AI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "Server misconfiguration: missing GOOGLE_AI_API_KEY" },
-        { status: 500 }
-      );
-    }
+    // ---- Call Gemini 2.0 Flash with structured output ----
+    let parsed: ReportAnalysis;
 
-    const genAI = new GoogleGenAI({ apiKey });
-
-    const response = await genAI.models.generateContent({
-      model: "gemini-1.5-flash",
-      contents: [
-        {
-          role: "user",
-          parts: [
-            {
-              text: `You are a civic-issue analysis AI for the "Community Hero" platform.
-Analyse the attached image of a community or infrastructure problem.
-Return a JSON object with these fields:
-- category: the type of issue (e.g. Pothole, Broken Streetlight, Illegal Dumping, Flood, Graffiti, Fallen Tree, Water Leak)
-- title: a concise, descriptive title (max 80 characters)
-- description: a detailed description covering severity, affected area, and potential impact
-- severity_score: integer from 1 (cosmetic) to 5 (critical / dangerous)`,
-            },
-            {
-              inlineData: {
-                mimeType,
-                data: buffer.toString("base64"),
+    const genAI = getGeminiClient();
+    if (!genAI) {
+      // No API key — use fallback
+      console.warn("GEMINI_API_KEY not set, using fallback classification");
+      parsed = {
+        is_valid_issue: true,
+        rejection_reason: "",
+        category: "Uncategorized",
+        title: `Community Issue Report — ${new Date().toLocaleDateString()}`,
+        description: "This report was submitted but could not be analyzed by AI. Manual review required.",
+        severity_score: 3,
+      };
+    } else {
+      try {
+        const response = await withGeminiRetry(() =>
+          genAI.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: [
+              {
+                role: "user",
+                parts: [
+                  {
+                    text: `You are the primary City Infrastructure Triage Gate. Step 1: Determine if this image actually contains a reportable civic defect (e.g., pothole, graffiti, broken light, hazard). A minor crack IS a valid low-severity issue. However, standard wear and tear, perfectly clean roads, blank walls, or unrelated photos are NOT issues. If the image lacks a clear defect, you MUST set is_valid_issue to false and provide a rejection_reason.\nReturn a JSON object with these fields:\n- is_valid_issue: boolean\n- rejection_reason: string (empty if valid)\n- category: the type of issue (e.g. Pothole, Broken Streetlight, Illegal Dumping, Flood, Graffiti, Fallen Tree, Water Leak)\n- title: a concise, descriptive title (max 80 characters)\n- description: a detailed description covering severity, affected area, and potential impact\n- severity_score: integer from 1 (cosmetic) to 5 (critical / dangerous)`,
+                  },
+                  {
+                    inlineData: {
+                      mimeType,
+                      data: buffer.toString("base64"),
+                    },
+                  },
+                ],
               },
+            ],
+            config: {
+              responseMimeType: "application/json",
+              responseSchema: zodToGeminiSchema(),
             },
-          ],
-        },
-      ],
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: zodToGeminiSchema(),
-      },
-    });
+          })
+        );
 
-    // ---- Parse & validate the Gemini response with Zod ----
-    const rawText = response.text;
-    if (!rawText) {
-      return NextResponse.json(
-        { error: "Gemini returned an empty response" },
-        { status: 502 }
-      );
+        const rawText = response.text;
+        if (!rawText) {
+          throw new Error("Gemini returned an empty response");
+        }
+
+        parsed = ReportAnalysisSchema.parse(JSON.parse(rawText));
+      } catch (geminiError) {
+        console.error("Gemini API failed:", geminiError);
+        const parsedError = parseGeminiError(geminiError);
+        return NextResponse.json(
+          { error: parsedError.message },
+          { status: parsedError.status }
+        );
+      }
     }
 
-    const parsed: ReportAnalysis = ReportAnalysisSchema.parse(
-      JSON.parse(rawText)
-    );
+    if (!parsed.is_valid_issue) {
+      // Rejection logic & storage cleanup
+      const storageFileName = publicUrl.split('/').pop();
+      if (storageFileName) {
+        await supabase.storage.from("issue_images").remove([storageFileName]);
+      }
+      return NextResponse.json(
+        { error: parsed.rejection_reason || "AI Triage Rejected: Invalid civic issue." },
+        { status: 400 }
+      );
+    }
 
     // ---- Insert into the reports table ----
     const { data: report, error: insertError } = await supabase
@@ -187,6 +222,7 @@ Return a JSON object with these fields:
         longitude: lng,
         image_url: publicUrl,
         status: "Reported",
+        user_id: user.id,
       })
       .select()
       .single();
@@ -197,6 +233,14 @@ Return a JSON object with these fields:
         { error: "Failed to save report to database" },
         { status: 500 }
       );
+    }
+
+    // Give civic points securely
+    const { error: rpcError } = await supabase.rpc("increment_civic_points", {
+      points_to_add: 10,
+    });
+    if (rpcError) {
+      console.error("Failed to increment points:", rpcError);
     }
 
     return NextResponse.json({ report }, { status: 201 });
