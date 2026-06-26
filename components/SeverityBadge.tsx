@@ -43,7 +43,7 @@ export function SeverityBadge({ score }: { score: number }) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold tracking-wide uppercase ${config.badge}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-semibold tracking-wide uppercase shadow-sm backdrop-blur-md ${config.badge}`}
     >
       <Icon className="size-3" />
       {config.label}

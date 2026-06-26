@@ -28,6 +28,7 @@ import {
   Search,
   XCircle,
   Trash2,
+  ImageIcon,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -138,7 +139,8 @@ export default function DashboardPage() {
     return () => subscription.unsubscribe();
   }, [supabase]);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
   const verifyFileInputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -489,7 +491,7 @@ export default function DashboardPage() {
               <Activity className="size-5 text-black" />
             </div>
             <div>
-              <h1 className="text-lg font-bold tracking-tight text-slate-50">
+              <h1 className="text-lg font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500">
                 CivicPulse
               </h1>
               <p className="text-xs text-slate-500">
@@ -578,44 +580,27 @@ export default function DashboardPage() {
 
               <div className="space-y-4 py-2">
                 {/* File Upload Zone */}
-                <div
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setDragActive(true);
-                  }}
-                  onDragLeave={() => setDragActive(false)}
-                  onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`group flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 transition-all duration-200 ${
-                    dragActive
-                      ? "border-cyan-500 bg-cyan-500/5"
-                      : "border-slate-700 hover:border-cyan-500 hover:bg-slate-800/50"
-                  }`}
-                >
-                  {previewUrl ? (
-                    <div className="relative">
-                      <img
-                        src={previewUrl}
-                        alt="Preview"
-                        className="max-h-48 rounded-lg object-cover shadow-lg"
-                      />
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleFileChange(null);
-                        }}
-                        className="absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold shadow-lg hover:bg-red-400 transition-colors"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ) : (
-                    <>
+                {!previewUrl ? (
+                  <div className="flex flex-col gap-4">
+                    {/* Desktop View (Hidden on Mobile) */}
+                    <div
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        setDragActive(true);
+                      }}
+                      onDragLeave={() => setDragActive(false)}
+                      onDrop={handleDrop}
+                      onClick={() => galleryInputRef.current?.click()}
+                      className={`group hidden md:flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 transition-all duration-200 ${
+                        dragActive
+                          ? "border-cyan-500 bg-cyan-500/5"
+                          : "border-slate-700 hover:border-cyan-500 hover:bg-slate-800/50 text-slate-400 hover:text-white"
+                      }`}
+                    >
                       <div className="mb-3 flex size-12 items-center justify-center rounded-xl bg-slate-800 transition-colors group-hover:bg-cyan-500/10">
                         <Upload className="size-5 text-slate-500 group-hover:text-cyan-400 transition-colors" />
                       </div>
-                      <p className="text-sm text-slate-400">
+                      <p className="text-sm">
                         Drag & drop an image, or{" "}
                         <span className="font-semibold text-cyan-400">
                           click to browse
@@ -624,18 +609,68 @@ export default function DashboardPage() {
                       <p className="mt-1 text-xs text-slate-600">
                         JPG, PNG, WEBP up to 10MB
                       </p>
-                    </>
-                  )}
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) =>
-                      handleFileChange(e.target.files?.[0] ?? null)
-                    }
-                  />
-                </div>
+                    </div>
+
+                    {/* Mobile View (Hidden on Desktop) */}
+                    <div className="flex md:hidden gap-4 w-full">
+                      <button
+                        type="button"
+                        onClick={() => cameraInputRef.current?.click()}
+                        className="min-h-[60px] flex-1 flex flex-col items-center justify-center bg-slate-900/50 border border-slate-800 rounded-xl active:bg-slate-800 text-slate-300 gap-2 transition-colors"
+                      >
+                        <Camera className="size-5" />
+                        <span className="text-sm font-semibold">Take Photo</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => galleryInputRef.current?.click()}
+                        className="min-h-[60px] flex-1 flex flex-col items-center justify-center bg-slate-900/50 border border-slate-800 rounded-xl active:bg-slate-800 text-slate-300 gap-2 transition-colors"
+                      >
+                        <ImageIcon className="size-5" />
+                        <span className="text-sm font-semibold">Gallery</span>
+                      </button>
+                    </div>
+
+                    {/* Hidden Inputs */}
+                    <input
+                      ref={cameraInputRef}
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={(e) =>
+                        handleFileChange(e.target.files?.[0] ?? null)
+                      }
+                    />
+                    <input
+                      ref={galleryInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) =>
+                        handleFileChange(e.target.files?.[0] ?? null)
+                      }
+                    />
+                  </div>
+                ) : (
+                  <div className="relative flex flex-col">
+                    <img
+                      src={previewUrl}
+                      alt="Preview"
+                      className="max-h-48 w-full rounded-lg object-cover shadow-lg"
+                    />
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleFileChange(null);
+                      }}
+                      className="mt-3 w-full rounded-lg bg-slate-800/50 py-2 text-sm font-semibold text-slate-400 transition-colors hover:bg-red-500/10 hover:text-red-400"
+                    >
+                      Remove Image
+                    </button>
+                  </div>
+                )}
 
                 {/* Use My Location */}
                 <Button
@@ -686,14 +721,14 @@ export default function DashboardPage() {
         </header>
 
         {/* ═══════════════════════ BODY ═══════════════════════ */}
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-col md:flex-row flex-1 w-full overflow-hidden">
           {/* ────────── LEFT COLUMN: Report Feed (35%) ────────── */}
-          <aside className="flex w-[35%] min-w-[320px] flex-col border-r border-slate-800/80 bg-slate-950">
+          <aside className="w-full md:w-[400px] lg:w-[450px] h-[50vh] md:h-full overflow-y-auto z-10 bg-slate-950 flex flex-col border-r border-slate-800/80 shadow-2xl relative">
             {/* View Mode Toggle */}
             <div className="flex items-center border-b border-slate-800/50 p-2 gap-1">
               <button
                 onClick={() => setViewMode("active")}
-                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold tracking-wide uppercase transition-all duration-200 ${
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 min-h-[44px] rounded-lg text-xs md:text-sm font-semibold tracking-wide uppercase transition-all duration-200 ${
                   viewMode === "active"
                     ? "bg-cyan-950 text-cyan-400 border border-cyan-500/50 shadow-lg shadow-cyan-500/10"
                     : "text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 border border-transparent"
@@ -707,7 +742,7 @@ export default function DashboardPage() {
               </button>
               <button
                 onClick={() => setViewMode("resolved")}
-                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold tracking-wide uppercase transition-all duration-200 ${
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 min-h-[44px] rounded-lg text-xs md:text-sm font-semibold tracking-wide uppercase transition-all duration-200 ${
                   viewMode === "resolved"
                     ? "bg-emerald-950 text-emerald-400 border border-emerald-500/50 shadow-lg shadow-emerald-500/10"
                     : "text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 border border-transparent"
@@ -750,19 +785,11 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 filteredReports.map((report) => {
-                  const level = getSeverityLevel(report.severity_score);
-                  const borderHover =
-                    level === "critical"
-                      ? "hover:border-red-500/50"
-                      : level === "medium"
-                        ? "hover:border-amber-500/50"
-                        : "hover:border-cyan-500/50";
-
                   return (
                     <Card
                       key={report.id}
                       onClick={() => setFocusedCoords({ lat: report.latitude, lng: report.longitude })}
-                      className={`group/report cursor-pointer border-slate-800 bg-slate-900/60 transition-all duration-200 ${borderHover} hover:bg-slate-900/80 hover:shadow-lg hover:shadow-black/20 ring-0`}
+                      className="group/report min-h-[44px] cursor-pointer border-slate-800/50 bg-slate-900/40 transition-all duration-300 hover:bg-slate-800/60 hover:border-cyan-900/50 hover:shadow-[0_0_15px_rgba(8,145,178,0.15)] ring-0"
                     >
                       <div className="flex gap-3 p-3">
                         {/* Thumbnail */}
@@ -799,7 +826,7 @@ export default function DashboardPage() {
                                 </button>
                               )}
                             </div>
-                            <p className="mt-0.5 text-xs text-slate-500 line-clamp-2">
+                            <p className="mt-0.5 text-xs text-slate-500 line-clamp-3">
                               {report.description}
                             </p>
                           </div>
@@ -848,7 +875,7 @@ export default function DashboardPage() {
           </aside>
 
           {/* ────────── RIGHT COLUMN: Map (65%) ────────── */}
-          <section className="relative flex-1">
+          <section className="w-full h-[50vh] md:h-full md:flex-1 relative z-0">
             <LeafletMap reports={filteredReports} viewMode={viewMode} focusCoords={focusedCoords} />
 
             {/* Map overlay legend */}

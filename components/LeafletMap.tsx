@@ -175,9 +175,29 @@ export default function LeafletMap({ reports, viewMode = "active", focusCoords =
     };
   }, []);
 
+  // Resize handler to prevent grey-tile bug on mobile/responsive scaling
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const handleResize = () => {
+      map.invalidateSize();
+    };
+
+    window.addEventListener("resize", handleResize);
+    
+    // Call it initially in case of layout shifts
+    const timeoutId = setTimeout(() => map.invalidateSize(), 200);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      clearTimeout(timeoutId);
+    };
+  }, []);
+
   return (
     <div className="relative h-full w-full">
-      <div ref={mapContainerRef} className="h-full w-full" style={{ zIndex: 1 }} />
+      <div ref={mapContainerRef} className="h-full w-full" style={{ zIndex: 1, height: "100%", width: "100%" }} />
       
       {/* Inject ping animation keyframes style tag */}
       <style>{`
