@@ -29,6 +29,7 @@ import {
   XCircle,
   Trash2,
   ImageIcon,
+  Navigation,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -843,29 +844,41 @@ export default function DashboardPage() {
                         </div>
                       </div>
 
-                      {/* ── Verify Fix or Resolved State ── */}
-                      <div className="border-t border-slate-800/60 px-3 py-2">
-                        {report.status === "Resolved" ? (
-                          <div className="flex items-center justify-center gap-1.5 h-7 w-full text-xs font-medium text-emerald-400 bg-emerald-500/10 rounded-md border border-emerald-500/20 cursor-default">
-                            <CheckCircle2 className="size-3.5" />
-                            Resolved
-                          </div>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={!session}
-                            title={!session ? "Login to earn Civic Points" : ""}
-                            className="w-full border-slate-700/60 text-slate-400 hover:border-emerald-500/50 hover:text-emerald-400 hover:bg-emerald-500/5 cursor-pointer gap-1.5 h-7 text-xs disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-500"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openVerifyDialog(report);
-                            }}
-                          >
-                            <CheckCircle2 className="size-3.5" />
-                            Verify Fix
-                          </Button>
-                        )}
+                      {/* ── Verify Fix or Resolved State & Navigation ── */}
+                      <div className="border-t border-slate-800/60 px-3 py-2 flex items-center gap-2">
+                        <div className="flex-1">
+                          {report.status === "Resolved" ? (
+                            <div className="flex items-center justify-center gap-1.5 h-7 w-full text-xs font-medium text-emerald-400 bg-emerald-500/10 rounded-md border border-emerald-500/20 cursor-default">
+                              <CheckCircle2 className="size-3.5" />
+                              Resolved
+                            </div>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={!session}
+                              title={!session ? "Login to earn Civic Points" : ""}
+                              className="w-full border-slate-700/60 text-slate-400 hover:border-emerald-500/50 hover:text-emerald-400 hover:bg-emerald-500/5 cursor-pointer gap-1.5 h-7 text-xs disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-500"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openVerifyDialog(report);
+                              }}
+                            >
+                              <CheckCircle2 className="size-3.5" />
+                              Verify Fix
+                            </Button>
+                          )}
+                        </div>
+                        <a
+                          href={`https://www.google.com/maps/dir/?api=1&destination=${report.latitude},${report.longitude}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center justify-center h-7 px-3 gap-1.5 text-xs font-medium rounded-full bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200 transition-colors"
+                        >
+                          <Navigation className="size-3.5" />
+                          Navigate
+                        </a>
                       </div>
                     </Card>
                   );
