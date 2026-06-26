@@ -71,4 +71,4 @@ This is not a public sandbox. CivicPulse is built on a hardened, production-read
 
 ## 👤 Developer
 
-* **Pratyush Raj** - *Pursuing Information Technology @ VIT Vellore* (Reg No: 24BIT0596)
+* **Pratyush Raj** - *Pursuing B-Tech Information Technology @ VIT Vellore*
