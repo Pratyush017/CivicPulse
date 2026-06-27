@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
 import { Session } from "@supabase/supabase-js";
@@ -13,9 +13,9 @@ interface Profile {
 export function LoginButton() {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = useCallback(async (userId: string) => {
     const { data } = await supabase
       .from("profiles")
       .select("civic_points, avatar_url")
@@ -25,7 +25,7 @@ export function LoginButton() {
     if (data) {
       setProfile(data);
     }
-  };
+  }, [supabase]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -52,8 +52,7 @@ export function LoginButton() {
       subscription.unsubscribe();
       window.removeEventListener("civicPointsUpdate", handleUpdate);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [supabase, fetchProfile]);
 
   const handleSignIn = async () => {
     await supabase.auth.signInWithOAuth({
