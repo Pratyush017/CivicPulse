@@ -8,72 +8,49 @@ import { getGeminiClient, withGeminiRetry, parseGeminiError } from "@/lib/gemini
 // 1. Zod schema — single source of truth for the Gemini response shape
 // ---------------------------------------------------------------------------
 const ReportAnalysisSchema = z.object({
-  is_valid_issue: z.boolean().describe("True if the image contains a reportable civic defect (e.g. pothole, graffiti, broken light). False if it is standard wear and tear, clean roads, blank walls, or unrelated."),
-  rejection_reason: z.string().describe("If is_valid_issue is false, explain why it was rejected. If true, return an empty string."),
-  category: z
-    .string()
-    .describe(
-      "Category of the civic issue, e.g. Pothole, Broken Streetlight, Illegal Dumping, Flood, Graffiti, Fallen Tree, Water Leak, etc."
-    ),
-  title: z
-    .string()
-    .describe(
-      "A concise, descriptive title for the issue (max 80 characters)."
-    ),
-  description: z
-    .string()
-    .describe(
-      "A detailed description of the issue visible in the image, including context such as severity, affected area, and potential impact."
-    ),
-  severity_score: z
-    .number()
-    .int()
-    .min(1)
-    .max(5)
-    .describe(
-      "A severity rating from 1 (cosmetic / minor) to 5 (critical / dangerous)."
-    ),
+  isAuthentic: z.boolean().describe("True if authentic civic issue, false if stock photo or invalid"),
+  fraudReason: z.string().nullable().describe("Reason for rejection if isAuthentic is false"),
+  title: z.string(),
+  description: z.string(),
+  severity: z.enum(["Low", "Medium", "Critical"]),
+  category: z.string(),
 });
 
 type ReportAnalysis = z.infer<typeof ReportAnalysisSchema>;
 
 // ---------------------------------------------------------------------------
-// 2. Helper — convert Zod schema → Gemini responseSchema (JSON Schema subset)
+// 2. Helper — convert Zod schema → Gemini responseSchema
 // ---------------------------------------------------------------------------
 function zodToGeminiSchema() {
   return {
     type: Type.OBJECT,
     properties: {
-      is_valid_issue: {
+      isAuthentic: {
         type: Type.BOOLEAN,
-        description: "True if the image contains a reportable civic defect. False if it is standard wear and tear, clean roads, blank walls, or unrelated.",
+        description: "True if the image contains a real reportable civic defect. False if it is a stock photo, screenshot, or unrelated.",
       },
-      rejection_reason: {
+      fraudReason: {
         type: Type.STRING,
-        description: "If is_valid_issue is false, explain why it was rejected. If true, return an empty string.",
+        description: "If isAuthentic is false, explain why it was rejected. If true, return empty or null.",
       },
       category: {
         type: Type.STRING,
-        description:
-          "Category of the civic issue, e.g. Pothole, Broken Streetlight, Illegal Dumping, Flood, Graffiti, Fallen Tree, Water Leak, etc.",
+        description: "Category of the civic issue (e.g. Pothole, Graffiti, Flood).",
       },
       title: {
         type: Type.STRING,
-        description:
-          "A concise, descriptive title for the issue (max 80 characters).",
+        description: "A concise, descriptive title for the issue.",
       },
       description: {
         type: Type.STRING,
-        description:
-          "A detailed description of the issue visible in the image, including context such as severity, affected area, and potential impact.",
+        description: "A detailed description of the issue.",
       },
-      severity_score: {
-        type: Type.NUMBER,
-        description:
-          "A severity rating from 1 (cosmetic / minor) to 5 (critical / dangerous).",
+      severity: {
+        type: Type.STRING,
+        description: "Severity of the issue: Low, Medium, or Critical",
       },
     },
-    required: ["is_valid_issue", "rejection_reason", "category", "title", "description", "severity_score"],
+    required: ["isAuthentic", "title", "description", "severity", "category"],
   };
 }
 
@@ -147,12 +124,12 @@ export async function POST(request: NextRequest) {
       // No API key — use fallback
       console.warn("GEMINI_API_KEY not set, using fallback classification");
       parsed = {
-        is_valid_issue: true,
-        rejection_reason: "",
+        isAuthentic: true,
+        fraudReason: null,
         category: "Uncategorized",
         title: `Community Issue Report — ${new Date().toLocaleDateString()}`,
         description: "This report was submitted but could not be analyzed by AI. Manual review required.",
-        severity_score: 3,
+        severity: "Medium",
       };
     } else {
       try {
@@ -164,7 +141,7 @@ export async function POST(request: NextRequest) {
                 role: "user",
                 parts: [
                   {
-                    text: `You are the primary City Infrastructure Triage Gate. Step 1: Determine if this image actually contains a reportable civic defect (e.g., pothole, graffiti, broken light, hazard). A minor crack IS a valid low-severity issue. However, standard wear and tear, perfectly clean roads, blank walls, or unrelated photos are NOT issues. You are also a digital forensics expert. You must reject this image if it appears to be a downloaded stock photo, contains watermarks, shows computer screen pixels (moiré effect), or lacks physical realism. If the image lacks a clear defect or fails the forensic check, you MUST set is_valid_issue to false and provide a rejection_reason.\nReturn a JSON object with these fields:\n- is_valid_issue: boolean\n- rejection_reason: string (empty if valid)\n- category: the type of issue (e.g. Pothole, Broken Streetlight, Illegal Dumping, Flood, Graffiti, Fallen Tree, Water Leak)\n- title: a concise, descriptive title (max 80 characters)\n- description: a detailed description covering severity, affected area, and potential impact\n- severity_score: integer from 1 (cosmetic) to 5 (critical / dangerous)`,
+                    text: `You are the primary City Infrastructure Triage Gate. Determine if this image contains a reportable civic defect (e.g., pothole, graffiti). You are a digital forensics expert. You must reject this image if it appears to be a downloaded stock photo, contains watermarks, shows computer screen pixels (moiré effect), or lacks physical realism. Return ONLY a valid JSON object matching the requested schema.`,
                   },
                   {
                     inlineData: {
@@ -187,28 +164,37 @@ export async function POST(request: NextRequest) {
           throw new Error("Gemini returned an empty response");
         }
 
+        // Strict try/catch parsing inside the AI call block
         parsed = ReportAnalysisSchema.parse(JSON.parse(rawText));
       } catch (geminiError) {
-        console.error("Gemini API failed:", geminiError);
+        console.error("Gemini API or Parsing failed:", geminiError);
         const parsedError = parseGeminiError(geminiError);
         return NextResponse.json(
-          { error: parsedError.message },
-          { status: parsedError.status }
+          { error: "AI Parsing Failed: " + parsedError.message },
+          { status: 400 }
         );
       }
     }
 
-    if (!parsed.is_valid_issue) {
+    if (!parsed.isAuthentic) {
       // Rejection logic & storage cleanup
       const storageFileName = publicUrl.split('/').pop();
       if (storageFileName) {
         await supabase.storage.from("issue_images").remove([storageFileName]);
       }
       return NextResponse.json(
-        { error: parsed.rejection_reason || "AI Triage Rejected: Invalid civic issue." },
+        { error: parsed.fraudReason || "AI Triage Rejected: Invalid civic issue." },
         { status: 400 }
       );
     }
+
+    // Map severity to integer
+    const severityMap: Record<string, number> = {
+      Low: 1,
+      Medium: 3,
+      Critical: 5,
+    };
+    const mappedSeverity = severityMap[parsed.severity] || 3;
 
     // ---- Insert into the reports table ----
     const { data: report, error: insertError } = await supabase
@@ -217,7 +203,7 @@ export async function POST(request: NextRequest) {
         title: parsed.title,
         description: parsed.description,
         category: parsed.category,
-        severity_score: parsed.severity_score,
+        severity_score: mappedSeverity,
         latitude: lat,
         longitude: lng,
         image_url: publicUrl,
