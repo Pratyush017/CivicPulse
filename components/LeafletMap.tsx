@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useRef, useMemo } from "react";
+import React, { useEffect, useRef, useMemo, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import Dock from "./ui/Dock";
 
 interface Report {
   id: string;
@@ -21,6 +22,7 @@ interface LeafletMapProps {
   reports: Report[];
   viewMode?: "active" | "resolved";
   focusCoords?: { lat: number; lng: number } | null;
+  emphasizedSeverity?: number | null;
 }
 
 // Helper to get marker color based on severity or resolved status
@@ -33,7 +35,7 @@ const getMarkerColor = (report: Report, viewMode: string) => {
   return "#ef4444"; // red-500
 };
 
-export default function LeafletMap({ reports, viewMode = "active", focusCoords = null }: LeafletMapProps) {
+export default function LeafletMap({ reports, viewMode = "active", focusCoords = null, emphasizedSeverity = null }: LeafletMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<{ [key: string]: L.Marker }>({});
@@ -92,7 +94,7 @@ export default function LeafletMap({ reports, viewMode = "active", focusCoords =
     });
   }, [focusCoords]);
 
-  // Sync markers when reports or viewMode changes
+  // Sync markers when reports, viewMode, or emphasizedSeverity changes
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -109,8 +111,20 @@ export default function LeafletMap({ reports, viewMode = "active", focusCoords =
     // Add or update markers for current reports
     reports.forEach((report) => {
       const color = getMarkerColor(report, viewMode);
+      
+      let isEmphasized = false;
+      if (emphasizedSeverity !== null) {
+        if (emphasizedSeverity === 1 && report.severity_score <= 2) isEmphasized = true;
+        else if (emphasizedSeverity === 2 && report.severity_score === 3) isEmphasized = true;
+        else if (emphasizedSeverity === 3 && report.severity_score >= 4) isEmphasized = true;
+      }
+
+      const scale = isEmphasized ? "scale(2.5)" : "scale(1)";
+      const zIndexOffset = isEmphasized ? 1000 : 0;
+      const transitionStyle = "transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);";
+
       const markerHtml = `
-        <div style="position: relative; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+        <div style="position: relative; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; transform: ${scale}; ${transitionStyle} transform-origin: center bottom;">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" 
                   fill="${color}" 
@@ -149,21 +163,27 @@ export default function LeafletMap({ reports, viewMode = "active", focusCoords =
 
       const marker = L.marker([report.latitude, report.longitude], {
         icon: customIcon,
-      })
-        .addTo(map)
-        .bindPopup(`
-          <div style="color: #f8fafc; background-color: #0f172a; padding: 4px; font-family: sans-serif;">
-            <h4 style="margin: 0 0 4px 0; font-size: 14px; font-weight: 600;">${report.title}</h4>
-            <p style="margin: 0 0 6px 0; font-size: 11px; color: #94a3b8;">${report.description}</p>
-            <div style="font-size: 10px; display: inline-block; padding: 2px 6px; border-radius: 9999px; background-color: ${color}20; color: ${color}; border: 1px solid ${color}40; text-transform: uppercase; font-weight: bold;">
-              ${statusLabel}
-            </div>
-          </div>
-        `);
+        zIndexOffset,
+      });
+
+      marker.bindPopup(`
+        <div style="font-family: inherit; padding: 4px;">
+          <h3 style="margin: 0 0 4px 0; font-size: 14px; font-weight: 600; color: #1e293b;">${report.title}</h3>
+          <p style="margin: 0 0 8px 0; font-size: 12px; color: #64748b;">${statusLabel}</p>
+          ${
+            report.image_url
+              ? `<img src="${report.image_url}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 6px; margin-bottom: 8px;" alt="Issue" />`
+              : ""
+          }
+          <p style="margin: 0; font-size: 12px; color: #475569; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${report.description}</p>
+        </div>
+      `);
+
+      marker.addTo(map);
       markersRef.current[report.id] = marker;
     });
 
-  }, [reports, viewMode]);
+  }, [reports, viewMode, focusCoords, emphasizedSeverity]);
 
   // Clean up map instance on unmount
   useEffect(() => {
@@ -196,8 +216,8 @@ export default function LeafletMap({ reports, viewMode = "active", focusCoords =
   }, []);
 
   return (
-    <div className="relative h-full w-full">
-      <div ref={mapContainerRef} className="h-full w-full" style={{ zIndex: 1, height: "100%", width: "100%" }} />
+    <div className="relative w-full h-full">
+      <div ref={mapContainerRef} className="w-full h-full z-0" style={{ backgroundColor: "#0a0a0a" }} />
       
       {/* Inject ping animation keyframes style tag */}
       <style>{`
@@ -206,6 +226,10 @@ export default function LeafletMap({ reports, viewMode = "active", focusCoords =
             transform: scale(2.5);
             opacity: 0;
           }
+        }
+        .custom-marker-icon {
+          background: transparent;
+          border: none;
         }
         .leaflet-popup-content-wrapper {
           background-color: #0f172a !important;

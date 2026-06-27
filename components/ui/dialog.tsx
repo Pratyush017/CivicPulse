@@ -6,6 +6,8 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
+import TiltedCard from "@/components/ui/TiltedCard"
+import BorderGlow from "@/components/ui/BorderGlow"
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
@@ -53,28 +55,60 @@ function DialogContent({
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
-          className
+          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 duration-100 outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"
         )}
         {...props}
       >
-        {children}
-        {showCloseButton && (
-          <DialogPrimitive.Close
-            data-slot="dialog-close"
-            render={
-              <Button
-                variant="ghost"
-                className="absolute top-2 right-2"
-                size="icon-sm"
-              />
-            }
-          >
-            <XIcon
-            />
-            <span className="sr-only">Close</span>
-          </DialogPrimitive.Close>
-        )}
+        <TiltedCard
+          imageSrc={undefined}
+          altText=""
+          captionText=""
+          containerHeight="auto"
+          containerWidth="100%"
+          imageHeight="100%"
+          imageWidth="100%"
+          rotateAmplitude={6}
+          scaleOnHover={1.02}
+          showMobileWarning={false}
+          showTooltip={false}
+          displayOverlayContent={true}
+          className="w-full"
+          overlayContent={
+            <BorderGlow 
+              borderRadius={12} 
+              backgroundColor="#0a0a0a" 
+              glowColor="0 0 100" 
+              edgeSensitivity={0} 
+              glowRadius={70} 
+              glowIntensity={2} 
+              coneSpread={2} 
+              animated={true}
+              className="w-full h-full"
+            >
+              <div className={cn(
+                "flex flex-col gap-4 rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 w-full h-full relative shadow-2xl",
+                className
+              )}>
+                {children}
+                {showCloseButton && (
+                  <DialogPrimitive.Close
+                    data-slot="dialog-close"
+                    render={
+                      <Button
+                        variant="ghost"
+                        className="absolute top-2 right-2"
+                        size="icon-sm"
+                      />
+                    }
+                  >
+                    <XIcon />
+                    <span className="sr-only">Close</span>
+                  </DialogPrimitive.Close>
+                )}
+              </div>
+            </BorderGlow>
+          }
+        />
       </DialogPrimitive.Popup>
     </DialogPortal>
   )

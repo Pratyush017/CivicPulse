@@ -19,6 +19,7 @@
     "dayjs": "^1.11.21",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.21.0",
+    "motion": "^12.42.0",
     "next": "16.2.9",
     "next-themes": "^0.4.6",
     "react": "19.2.4",

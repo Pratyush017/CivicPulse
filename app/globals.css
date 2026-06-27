@@ -46,6 +46,18 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+
+  --animate-star-movement-bottom: star-movement-bottom var(--animation-duration, 6s) linear infinite alternate;
+  --animate-star-movement-top: star-movement-top var(--animation-duration, 6s) linear infinite alternate;
+
+  @keyframes star-movement-bottom {
+    0% { transform: translate(0%, 0%); opacity: 1; }
+    100% { transform: translate(-100%, 0%); opacity: 0; }
+  }
+  @keyframes star-movement-top {
+    0% { transform: translate(0%, 0%); opacity: 1; }
+    100% { transform: translate(100%, 0%); opacity: 0; }
+  }
 }
 
 :root {
@@ -132,10 +144,10 @@
 /* CivicPulse Design Guide Tokens & Utilities */
 :root {
   /* Backgrounds */
-  --bg-page:        #0f1117;
-  --bg-surface:     #181c27;
-  --bg-card:        #1e2333;
-  --bg-card-hover:  #242840;
+  --bg-page:        #000000;
+  --bg-surface:     #050505;
+  --bg-card:        #0a0a0a;
+  --bg-card-hover:  #111111;
 
   /* Borders */
   --border:         rgba(255, 255, 255, 0.07);

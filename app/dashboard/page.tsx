@@ -45,6 +45,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Toast } from "@/components/Toast";
+import GradualBlur from "@/components/ui/GradualBlur";
+import StarBorder from "@/components/ui/StarBorder";
+import TiltedCard from "@/components/ui/TiltedCard";
+import BorderGlow from "@/components/ui/BorderGlow";
+import Folder from "@/components/ui/Folder";
+import GooeyNav from "@/components/ui/GooeyNav";
 import { createClient } from "@/utils/supabase/client";
 import { LoginButton } from "@/components/ui/LoginButton";
 
@@ -119,6 +125,16 @@ export default function DashboardPage() {
     message: string;
     type: "success" | "error" | "info";
   } | null>(null);
+
+  // Map Emphasis state
+  const [emphasizedSeverity, setEmphasizedSeverity] = useState<number | null>(null);
+
+  const handleDockClick = (severityIndex: number) => {
+    setEmphasizedSeverity(severityIndex);
+    setTimeout(() => {
+      setEmphasizedSeverity(null);
+    }, 3000);
+  };
 
   // --- Auth State ---
   const [session, setSession] = useState<Session | null>(null);
@@ -485,9 +501,9 @@ export default function DashboardPage() {
         />
       )}
 
-      <main className="flex h-screen flex-col overflow-hidden bg-slate-950 text-slate-100">
+      <main className="flex h-screen flex-col overflow-hidden bg-black text-slate-100">
         {/* ═══════════════════════ HEADER ═══════════════════════ */}
-        <header className="relative z-20 flex items-center justify-between border-b border-[#252d45] bg-[#181c27] px-6 py-3">
+        <header className="relative z-20 flex items-center justify-between border-b border-[#111111] bg-[#050505] px-6 py-3">
           <div className="flex items-center gap-2.5">
             <div className="relative w-9 h-9">
               <div className="absolute inset-[-4px] rounded-[13px] border-2 border-teal-400 animate-[pulse-ring_2.4s_ease-out_infinite] opacity-0" />
@@ -503,26 +519,34 @@ export default function DashboardPage() {
 
           {/* Stats row */}
           <div className="hidden items-center gap-3 md:flex">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-[30px] border text-xs bg-teal-500/10 border-teal-500/20 text-teal-400">
-              <div className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-[dot-breathe_2s_ease-in-out_infinite]" />
-              <span className="font-semibold font-display text-[#e8eaf0]">{activeReports.length}</span>
-              <span className="text-[#7a8199]">active</span>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-[30px] border text-xs bg-white/5 border-white/10 text-white">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
-              <span className="font-semibold font-display text-[#e8eaf0]">{resolvedReports.length}</span>
-              <span className="text-[#7a8199]">resolved</span>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-[30px] border text-xs bg-amber-500/10 border-amber-500/20 text-amber-400">
-              <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-              <span className="font-semibold font-display text-[#e8eaf0]">{needsAttentionCount}</span>
-              <span className="text-[#7a8199]">attention</span>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-[30px] border text-xs bg-rose-500/10 border-rose-500/20 text-rose-400">
-              <div className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-[dot-blink_1.8s_ease-in-out_infinite]" />
-              <span className="font-semibold font-display text-[#e8eaf0]">{criticalCount}</span>
-              <span className="text-[#7a8199]">critical</span>
-            </div>
+            <BorderGlow borderRadius={30} backgroundColor="#000000" glowColor="173 80 50" colors={['#2dd4bf', '#14b8a6', '#0f766e']} edgeSensitivity={0} glowRadius={50} coneSpread={2}>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-[30px] border text-xs bg-teal-500/10 border-teal-500/20 text-teal-400">
+                <div className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-[dot-breathe_2s_ease-in-out_infinite]" />
+                <span className="font-semibold font-display text-[#e8eaf0]">{activeReports.length}</span>
+                <span className="text-[#7a8199]">active</span>
+              </div>
+            </BorderGlow>
+            <BorderGlow borderRadius={30} backgroundColor="#000000" glowColor="0 0 100" colors={['#ffffff', '#e5e7eb', '#d1d5db']} edgeSensitivity={0} glowRadius={50} coneSpread={2}>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-[30px] border text-xs bg-white/5 border-white/10 text-white">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                <span className="font-semibold font-display text-[#e8eaf0]">{resolvedReports.length}</span>
+                <span className="text-[#7a8199]">resolved</span>
+              </div>
+            </BorderGlow>
+            <BorderGlow borderRadius={30} backgroundColor="#000000" glowColor="43 96 56" colors={['#fbbf24', '#f59e0b', '#d97706']} edgeSensitivity={0} glowRadius={50} coneSpread={2}>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-[30px] border text-xs bg-amber-500/10 border-amber-500/20 text-amber-400">
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                <span className="font-semibold font-display text-[#e8eaf0]">{needsAttentionCount}</span>
+                <span className="text-[#7a8199]">attention</span>
+              </div>
+            </BorderGlow>
+            <BorderGlow borderRadius={30} backgroundColor="#000000" glowColor="350 89 60" colors={['#f43f5e', '#e11d48', '#be123c']} edgeSensitivity={0} glowRadius={50} coneSpread={2}>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-[30px] border text-xs bg-rose-500/10 border-rose-500/20 text-rose-400">
+                <div className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-[dot-blink_1.8s_ease-in-out_infinite]" />
+                <span className="font-semibold font-display text-[#e8eaf0]">{criticalCount}</span>
+                <span className="text-[#7a8199]">critical</span>
+              </div>
+            </BorderGlow>
           </div>
 
           {/* ═══════ Report Issue Dialog ═══════ */}
@@ -558,7 +582,7 @@ export default function DashboardPage() {
                 />
               </span>
 
-            <DialogContent className="sm:max-w-lg bg-slate-900 border border-slate-700 text-slate-100 ring-0">
+            <DialogContent className="sm:max-w-lg bg-[#0a0a0a] border border-white/10 text-slate-100 ring-0">
               <DialogHeader>
                 <DialogTitle className="text-slate-50 text-lg">
                   <span className="flex items-center gap-2">
@@ -591,8 +615,8 @@ export default function DashboardPage() {
                           : "border-slate-700 hover:border-cyan-500 hover:bg-slate-800/50 text-slate-400 hover:text-white"
                       }`}
                     >
-                      <div className="mb-3 flex size-12 items-center justify-center rounded-xl bg-slate-800 transition-colors group-hover:bg-cyan-500/10">
-                        <Upload className="size-5 text-slate-500 group-hover:text-cyan-400 transition-colors" />
+                      <div className="mb-6 flex justify-center">
+                        <Folder size={0.7} color="#22d3ee" />
                       </div>
                       <p className="text-sm">
                         Drag & drop an image, or{" "}
@@ -719,35 +743,31 @@ export default function DashboardPage() {
         {/* ═══════════════════════ BODY ═══════════════════════ */}
         <div className="flex flex-col md:flex-row flex-1 w-full overflow-hidden">
           {/* ────────── LEFT COLUMN: Report Feed (35%) ────────── */}
-          <aside className="w-full md:w-[400px] lg:w-[450px] h-[50vh] md:h-full overflow-y-auto z-10 bg-[#0f1117] flex flex-col border-r border-[#252d45] shadow-2xl relative">
-            {/* View Mode Toggle */}
-            <div className="flex items-center border-b border-[#252d45] gap-4 px-6 pt-3">
-              <button
-                onClick={() => setViewMode("active")}
-                className={`pb-3 text-xs font-semibold tracking-wider uppercase transition-colors relative ${
-                  viewMode === "active"
-                    ? "text-teal-400"
-                    : "text-[#7a8199] hover:text-[#e8eaf0]"
-                }`}
-              >
-                ACTIVE <span className="ml-1 bg-white/5 rounded-full px-2 py-0.5 text-white">{activeReports.length}</span>
-                {viewMode === "active" && (
-                  <div className="absolute bottom-0 left-0 w-full h-[2px] bg-teal-400" />
-                )}
-              </button>
-              <button
-                onClick={() => setViewMode("resolved")}
-                className={`pb-3 text-xs font-semibold tracking-wider uppercase transition-colors relative ${
-                  viewMode === "resolved"
-                    ? "text-teal-400"
-                    : "text-[#7a8199] hover:text-[#e8eaf0]"
-                }`}
-              >
-                RESOLVED <span className="ml-1 bg-white/5 rounded-full px-2 py-0.5 text-white">{resolvedReports.length}</span>
-                {viewMode === "resolved" && (
-                  <div className="absolute bottom-0 left-0 w-full h-[2px] bg-teal-400" />
-                )}
-              </button>
+          <aside className="w-full md:w-[400px] lg:w-[450px] h-[50vh] md:h-full overflow-y-auto z-10 bg-black flex flex-col border-r border-[#252d45] shadow-2xl relative">
+            <div className="flex items-center border-b border-[#252d45] gap-4 px-6 pt-3 pb-3">
+              <GooeyNav
+                initialActiveIndex={viewMode === 'active' ? 0 : 1}
+                onChange={(index) => setViewMode(index === 0 ? "active" : "resolved")}
+                particleCount={6}
+                timeVariance={100}
+                colors={[173, 173, 173, 173]} // Teal-ish colors mapping if defined in CSS, else fallback
+                items={[
+                  {
+                    label: (
+                      <>
+                        ACTIVE <span className="ml-1 bg-black/20 rounded-full px-2 py-0.5">{activeReports.length}</span>
+                      </>
+                    )
+                  },
+                  {
+                    label: (
+                      <>
+                        RESOLVED <span className="ml-1 bg-black/20 rounded-full px-2 py-0.5">{resolvedReports.length}</span>
+                      </>
+                    )
+                  }
+                ]}
+              />
             </div>
 
             {/* Scrollable feed */}
@@ -803,19 +823,37 @@ export default function DashboardPage() {
                   const s = severityConfig;
                   const relativeTime = dayjs(report.created_at).fromNow();
 
+                  const starColor = report.severity_score === 1 ? '#2dd4bf' : report.severity_score === 2 ? '#f43f5e' : '#fbbf24';
+
                   return (
-                    <div
+                    <TiltedCard
                       key={report.id}
-                      onClick={() => setFocusedCoords({ lat: report.latitude, lng: report.longitude })}
-                      className={`bg-[#1e2333] border border-white/7 border-l-4 ${s.border} rounded-xl overflow-hidden hover:bg-[#242840] hover:border-white/12 transition-colors cursor-pointer mb-3 last:mb-0`}
-                    >
-                      {/* Top content */}
+                      className="mb-3 last:mb-0 w-full"
+                      imageSrc=""
+                      containerHeight="auto"
+                      containerWidth="100%"
+                      imageHeight="auto"
+                      imageWidth="100%"
+                      rotateAmplitude={5}
+                      scaleOnHover={1.02}
+                      showMobileWarning={false}
+                      showTooltip={false}
+                      displayOverlayContent={true}
+                      overlayContent={
+                        <StarBorder
+                          as="div"
+                          color={starColor}
+                          className="w-full h-full"
+                          innerClassName={`bg-[#0a0a0a] border border-white/7 border-l-4 ${s.border} rounded-[20px] overflow-hidden hover:bg-[#111111] hover:border-white/12 transition-colors cursor-pointer flex flex-col w-full h-full`}
+                          onClick={() => setFocusedCoords({ lat: report.latitude, lng: report.longitude })}
+                        >
+                          {/* Top content */}
                       <div className="flex gap-3 p-3.5 pb-0">
                         {report.image_url ? (
                           /* eslint-disable-next-line @next/next/no-img-element */
                           <img src={report.image_url} className="w-14 h-14 rounded-lg object-cover flex-shrink-0 grayscale-[30%]" alt={report.title} />
                         ) : (
-                          <div className="w-14 h-14 rounded-lg bg-[#252d45] flex-shrink-0" />
+                          <div className="w-14 h-14 rounded-lg bg-[#111111] flex-shrink-0" />
                         )}
                         <div className="min-w-0 flex-1">
                           <div className="flex items-start justify-between">
@@ -885,35 +923,58 @@ export default function DashboardPage() {
                           Navigate
                         </a>
                       </div>
-                    </div>
+                    </StarBorder>
+                    }
+                  />
                   );
                 })
               )}
             </div>
+            
+            {/* Smooth blur fade for the scrollable feed */}
+            <GradualBlur preset="bottom" height="4rem" zIndex={20} className="pointer-events-none" />
           </aside>
 
           {/* ────────── RIGHT COLUMN: Map (65%) ────────── */}
           <section className="w-full h-[50vh] md:h-full md:flex-1 relative z-0">
-            <LeafletMap reports={filteredReports} viewMode={viewMode} focusCoords={focusedCoords} />
+            <LeafletMap reports={filteredReports} viewMode={viewMode} focusCoords={focusedCoords} emphasizedSeverity={emphasizedSeverity} />
 
             {/* Map overlay legend */}
-            <div className="absolute bottom-6 left-6 z-10 flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/90 px-4 py-2.5 backdrop-blur-lg shadow-2xl">
+            <div className="absolute bottom-6 left-6 z-10 flex items-center gap-4 rounded-xl border border-slate-800 bg-slate-950/90 px-5 py-3 backdrop-blur-lg shadow-2xl">
               {viewMode === "active" ? (
                 <>
-                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider mr-1">
+                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider mr-2">
                     Severity
                   </span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="size-2.5 rounded-full bg-cyan-500" />
-                    <span className="text-xs text-slate-400">Low</span>
+                  <div 
+                    className="flex items-center gap-1.5 cursor-pointer hover:bg-slate-800/80 hover:scale-[1.3] px-2.5 py-1.5 rounded-lg transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group relative transform origin-bottom"
+                    onClick={() => handleDockClick(1)}
+                  >
+                    <span className="size-2.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.6)]" />
+                    <span className="text-xs font-medium text-slate-300 group-hover:text-cyan-400 transition-colors">Low</span>
+                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] uppercase font-bold px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none border border-slate-700 shadow-xl whitespace-nowrap translate-y-2 group-hover:translate-y-0">
+                      Click to highlight
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="size-2.5 rounded-full bg-amber-500" />
-                    <span className="text-xs text-slate-400">Medium</span>
+                  <div 
+                    className="flex items-center gap-1.5 cursor-pointer hover:bg-slate-800/80 hover:scale-[1.3] px-2.5 py-1.5 rounded-lg transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group relative transform origin-bottom"
+                    onClick={() => handleDockClick(2)}
+                  >
+                    <span className="size-2.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
+                    <span className="text-xs font-medium text-slate-300 group-hover:text-amber-400 transition-colors">Medium</span>
+                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] uppercase font-bold px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none border border-slate-700 shadow-xl whitespace-nowrap translate-y-2 group-hover:translate-y-0">
+                      Click to highlight
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="size-2.5 rounded-full bg-red-500" />
-                    <span className="text-xs text-slate-400">Critical</span>
+                  <div 
+                    className="flex items-center gap-1.5 cursor-pointer hover:bg-slate-800/80 hover:scale-[1.3] px-2.5 py-1.5 rounded-lg transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group relative transform origin-bottom"
+                    onClick={() => handleDockClick(3)}
+                  >
+                    <span className="size-2.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
+                    <span className="text-xs font-medium text-slate-300 group-hover:text-red-400 transition-colors">Critical</span>
+                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] uppercase font-bold px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none border border-slate-700 shadow-xl whitespace-nowrap translate-y-2 group-hover:translate-y-0">
+                      Click to highlight
+                    </div>
                   </div>
                 </>
               ) : (
@@ -922,8 +983,8 @@ export default function DashboardPage() {
                     Status
                   </span>
                   <div className="flex items-center gap-1.5">
-                    <span className="size-2.5 rounded-full bg-emerald-500" />
-                    <span className="text-xs text-slate-400">Resolved</span>
+                    <span className="size-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
+                    <span className="text-xs font-medium text-slate-300">Resolved</span>
                   </div>
                 </>
               )}
@@ -939,7 +1000,7 @@ export default function DashboardPage() {
             if (!open) resetVerifyForm();
           }}
         >
-          <DialogContent className="sm:max-w-lg bg-slate-900 border border-slate-700 text-slate-100 ring-0">
+          <DialogContent className="sm:max-w-lg bg-[#0a0a0a] border border-white/10 text-slate-100 ring-0">
             <DialogHeader>
               <DialogTitle className="text-slate-50 text-lg">
                 <span className="flex items-center gap-2">
