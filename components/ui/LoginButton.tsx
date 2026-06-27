@@ -55,10 +55,16 @@ export function LoginButton() {
   }, [supabase, fetchProfile]);
 
   const handleSignIn = async () => {
+    // If testing locally, stay on localhost. Otherwise, use the foolproof hardcoded link for judges.
+    const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    const redirectUrl = isLocal 
+      ? `${window.location.origin}/dashboard`
+      : "https://ais-dev-vepbjhdkqtxejrdobw2ter-708692642143.asia-southeast1.run.app/dashboard";
+
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: redirectUrl,
       },
     });
   };
@@ -69,31 +75,39 @@ export function LoginButton() {
   };
 
   if (session) {
+    const name = session.user.user_metadata.full_name || session.user.email || "User";
+    const initial = name.charAt(0).toUpperCase();
+
     return (
       <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2">
-          {profile?.avatar_url && (
-            <>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={profile.avatar_url}
-                alt="Avatar"
-                className="size-8 rounded-full border border-cyan-500/30 object-cover"
-              />
-            </>
+        <div className="flex items-center gap-2.5">
+          {profile?.avatar_url ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={profile.avatar_url}
+              alt="Avatar"
+              className="size-[34px] rounded-full object-cover"
+            />
+          ) : (
+            <div className="flex size-[34px] items-center justify-center rounded-full bg-indigo-500/20 text-indigo-400 font-display font-bold text-sm">
+              {initial}
+            </div>
           )}
           <div className="flex flex-col">
-            <span className="text-xs font-medium text-slate-300">
-              {session.user.user_metadata.full_name || session.user.email}
+            <span className="text-[13px] font-semibold text-[#e8eaf0] leading-tight">
+              {name}
             </span>
-            <span className="text-[10px] font-bold text-cyan-400">
-              {profile?.civic_points ?? 0} PTS
+            <span className="text-[11px] font-medium text-teal-400 leading-tight mt-0.5">
+              {profile?.civic_points ?? 0} pts
             </span>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={handleSignOut}>
-          Sign Out
-        </Button>
+        <button 
+          onClick={handleSignOut}
+          className="px-3 py-1.5 rounded-lg border border-white/10 text-xs font-medium text-[#7a8199] hover:text-[#e8eaf0] hover:bg-white/5 transition-colors cursor-pointer ml-2"
+        >
+          Sign out
+        </button>
       </div>
     );
   }

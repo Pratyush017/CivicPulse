@@ -487,54 +487,46 @@ export default function DashboardPage() {
 
       <main className="flex h-screen flex-col overflow-hidden bg-slate-950 text-slate-100">
         {/* ═══════════════════════ HEADER ═══════════════════════ */}
-        <header className="relative z-20 flex items-center justify-between border-b border-slate-800/80 bg-slate-950/90 px-6 py-3 backdrop-blur-xl">
-          <div className="flex items-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-cyan-400 shadow-lg shadow-cyan-500/20">
-              <Activity className="size-5 text-black" />
+        <header className="relative z-20 flex items-center justify-between border-b border-[#252d45] bg-[#181c27] px-6 py-3">
+          <div className="flex items-center gap-2.5">
+            <div className="relative w-9 h-9">
+              <div className="absolute inset-[-4px] rounded-[13px] border-2 border-teal-400 animate-[pulse-ring_2.4s_ease-out_infinite] opacity-0" />
+              <div className="w-9 h-9 bg-teal-400 rounded-[9px] flex items-center justify-center">
+                <Activity className="size-[18px] text-[#0f1117]" strokeWidth={2} />
+              </div>
             </div>
             <div>
-              <h1 className="text-lg font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500">
-                CivicPulse
-              </h1>
-              <p className="text-xs text-slate-500">
-                Community Issue Tracker
-              </p>
+              <p className="font-display font-bold text-base text-white tracking-tight leading-tight">CivicPulse</p>
+              <p className="text-[11px] text-[#7a8199] tracking-wide leading-tight">Community Issue Tracker</p>
             </div>
           </div>
 
           {/* Stats row */}
-          <div className="hidden items-center gap-6 md:flex">
-            <div className="text-center">
-              <p className="text-lg font-bold text-cyan-400">
-                {activeReports.length}
-              </p>
-              <p className="text-xs text-slate-500">Active</p>
+          <div className="hidden items-center gap-3 md:flex">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-[30px] border text-xs bg-teal-500/10 border-teal-500/20 text-teal-400">
+              <div className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-[dot-breathe_2s_ease-in-out_infinite]" />
+              <span className="font-semibold font-display text-[#e8eaf0]">{activeReports.length}</span>
+              <span className="text-[#7a8199]">active</span>
             </div>
-            <div className="h-8 w-px bg-slate-800" />
-            <div className="text-center">
-              <p className="text-lg font-bold text-emerald-400">
-                {resolvedReports.length}
-              </p>
-              <p className="text-xs text-slate-500">Resolved</p>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-[30px] border text-xs bg-white/5 border-white/10 text-white">
+              <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+              <span className="font-semibold font-display text-[#e8eaf0]">{resolvedReports.length}</span>
+              <span className="text-[#7a8199]">resolved</span>
             </div>
-            <div className="h-8 w-px bg-slate-800" />
-            <div className="text-center">
-              <p className="text-lg font-bold text-amber-400">
-                {needsAttentionCount}
-              </p>
-              <p className="text-xs text-slate-500">Attention</p>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-[30px] border text-xs bg-amber-500/10 border-amber-500/20 text-amber-400">
+              <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+              <span className="font-semibold font-display text-[#e8eaf0]">{needsAttentionCount}</span>
+              <span className="text-[#7a8199]">attention</span>
             </div>
-            <div className="h-8 w-px bg-slate-800" />
-            <div className="text-center">
-              <p className="text-lg font-bold text-red-400">
-                {criticalCount}
-              </p>
-              <p className="text-xs text-slate-500">Critical</p>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-[30px] border text-xs bg-rose-500/10 border-rose-500/20 text-rose-400">
+              <div className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-[dot-blink_1.8s_ease-in-out_infinite]" />
+              <span className="font-semibold font-display text-[#e8eaf0]">{criticalCount}</span>
+              <span className="text-[#7a8199]">critical</span>
             </div>
           </div>
 
           {/* ═══════ Report Issue Dialog ═══════ */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <LoginButton />
             <Dialog
               open={dialogOpen}
@@ -548,7 +540,7 @@ export default function DashboardPage() {
                   render={
                     <Button 
                       disabled={!session || reportCooldown > 0}
-                      className="bg-cyan-600 text-black font-bold hover:bg-cyan-500 shadow-lg shadow-cyan-600/25 transition-all hover:shadow-cyan-500/40 cursor-pointer gap-2 px-4 py-2 h-9 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-400 disabled:shadow-none"
+                      className="bg-teal-400 text-[#0f1117] font-bold font-display hover:bg-teal-300 transition-colors cursor-pointer gap-2 px-4 py-2 h-9 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-400 disabled:shadow-none"
                     >
                       {reportCooldown > 0 ? (
                         <>
@@ -727,36 +719,34 @@ export default function DashboardPage() {
         {/* ═══════════════════════ BODY ═══════════════════════ */}
         <div className="flex flex-col md:flex-row flex-1 w-full overflow-hidden">
           {/* ────────── LEFT COLUMN: Report Feed (35%) ────────── */}
-          <aside className="w-full md:w-[400px] lg:w-[450px] h-[50vh] md:h-full overflow-y-auto z-10 bg-slate-950 flex flex-col border-r border-slate-800/80 shadow-2xl relative">
+          <aside className="w-full md:w-[400px] lg:w-[450px] h-[50vh] md:h-full overflow-y-auto z-10 bg-[#0f1117] flex flex-col border-r border-[#252d45] shadow-2xl relative">
             {/* View Mode Toggle */}
-            <div className="flex items-center border-b border-slate-800/50 p-2 gap-1">
+            <div className="flex items-center border-b border-[#252d45] gap-4 px-6 pt-3">
               <button
                 onClick={() => setViewMode("active")}
-                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 min-h-[44px] rounded-lg text-xs md:text-sm font-semibold tracking-wide uppercase transition-all duration-200 ${
+                className={`pb-3 text-xs font-semibold tracking-wider uppercase transition-colors relative ${
                   viewMode === "active"
-                    ? "bg-cyan-950 text-cyan-400 border border-cyan-500/50 shadow-lg shadow-cyan-500/10"
-                    : "text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 border border-transparent"
+                    ? "text-teal-400"
+                    : "text-[#7a8199] hover:text-[#e8eaf0]"
                 }`}
               >
-                <Activity className="size-3.5" />
-                Active Issues
-                <span className={`ml-1 text-[10px] px-1.5 py-0.5 rounded-full ${
-                  viewMode === "active" ? "bg-cyan-500/20 text-cyan-300" : "bg-slate-800 text-slate-500"
-                }`}>{activeReports.length}</span>
+                ACTIVE <span className="ml-1 bg-white/5 rounded-full px-2 py-0.5 text-white">{activeReports.length}</span>
+                {viewMode === "active" && (
+                  <div className="absolute bottom-0 left-0 w-full h-[2px] bg-teal-400" />
+                )}
               </button>
               <button
                 onClick={() => setViewMode("resolved")}
-                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 min-h-[44px] rounded-lg text-xs md:text-sm font-semibold tracking-wide uppercase transition-all duration-200 ${
+                className={`pb-3 text-xs font-semibold tracking-wider uppercase transition-colors relative ${
                   viewMode === "resolved"
-                    ? "bg-emerald-950 text-emerald-400 border border-emerald-500/50 shadow-lg shadow-emerald-500/10"
-                    : "text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 border border-transparent"
+                    ? "text-teal-400"
+                    : "text-[#7a8199] hover:text-[#e8eaf0]"
                 }`}
               >
-                <ShieldCheck className="size-3.5" />
-                Resolved
-                <span className={`ml-1 text-[10px] px-1.5 py-0.5 rounded-full ${
-                  viewMode === "resolved" ? "bg-emerald-500/20 text-emerald-300" : "bg-slate-800 text-slate-500"
-                }`}>{resolvedReports.length}</span>
+                RESOLVED <span className="ml-1 bg-white/5 rounded-full px-2 py-0.5 text-white">{resolvedReports.length}</span>
+                {viewMode === "resolved" && (
+                  <div className="absolute bottom-0 left-0 w-full h-[2px] bg-teal-400" />
+                )}
               </button>
             </div>
 

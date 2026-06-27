@@ -128,3 +128,67 @@
     @apply font-sans;
   }
 }
+
+/* CivicPulse Design Guide Tokens & Utilities */
+:root {
+  /* Backgrounds */
+  --bg-page:        #0f1117;
+  --bg-surface:     #181c27;
+  --bg-card:        #1e2333;
+  --bg-card-hover:  #242840;
+
+  /* Borders */
+  --border:         rgba(255, 255, 255, 0.07);
+  --border-strong:  rgba(255, 255, 255, 0.12);
+
+  /* Text */
+  --text-primary:   #e8eaf0;
+  --text-muted:     #7a8199;
+  --text-dim:       #4a5068;
+
+  /* Severity colors */
+  --color-critical: #f43f5e;
+  --color-medium:   #f59e0b;
+  --color-low:      #2dd4bf;
+  --color-resolved: #22c55e;
+
+  /* Tints */
+  --tint-critical:  rgba(244, 63,  94,  0.13);
+  --tint-medium:    rgba(245, 158, 11,  0.13);
+  --tint-low:       rgba(45,  212, 191, 0.12);
+  --tint-resolved:  rgba(34,  197, 94,  0.12);
+  --tint-accent:    rgba(99,  102, 241, 0.15);
+
+  --color-accent:   #6366f1;
+}
+
+body {
+  font-family: var(--font-inter), 'Inter', sans-serif;
+  font-weight: 400;
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+}
+
+.font-display {
+  font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
+}
+
+/* Animations */
+@keyframes dot-breathe {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(45, 212, 191, 0.15); }
+  50%      { box-shadow: 0 0 0 5px rgba(45, 212, 191, 0.28); }
+}
+
+@keyframes dot-blink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.3; }
+}
+
+@keyframes pulse-ring {
+  0%   { transform: scale(0.88); opacity: 0.9; }
+  100% { transform: scale(1.55); opacity: 0; }
+}
+
+.dot-active   { animation: dot-breathe 2s ease-in-out infinite; }
+.dot-critical { animation: dot-blink 1.8s ease-in-out infinite; }
+.pulse-ring   { animation: pulse-ring 2.4s ease-out infinite; }
