@@ -302,7 +302,8 @@ export default function DashboardPage() {
         const err = await res.json();
         if (res.status === 400 && err.error) {
           const errMsg = String(err.error);
-          throw new Error(errMsg.startsWith("AI Triage") ? errMsg : `AI Triage Rejected: ${errMsg}`);
+          const isAIErr = errMsg.startsWith("AI Triage") || errMsg.startsWith("AI Service") || errMsg.startsWith("AI Parsing");
+          throw new Error(isAIErr ? errMsg : `AI Triage Rejected: ${errMsg}`);
         }
         throw new Error(err.error ?? "Upload failed");
       }

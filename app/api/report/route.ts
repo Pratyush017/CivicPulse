@@ -169,9 +169,15 @@ export async function POST(request: NextRequest) {
       } catch (geminiError) {
         console.error("Gemini API or Parsing failed:", geminiError);
         const parsedError = parseGeminiError(geminiError);
+        
+        // Don't prepend parsing error string if it's a rate limit issue
+        const errorMessage = parsedError.status === 429 
+          ? parsedError.message 
+          : "AI Parsing Failed: " + parsedError.message;
+          
         return NextResponse.json(
-          { error: "AI Parsing Failed: " + parsedError.message },
-          { status: 400 }
+          { error: errorMessage },
+          { status: parsedError.status }
         );
       }
     }
