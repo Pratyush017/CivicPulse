@@ -4,7 +4,9 @@ import React, { useCallback, useEffect, useRef, useState, useMemo } from "react"
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { Session } from "@supabase/supabase-js";
-
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+dayjs.extend(relativeTime);
 const LeafletMap = dynamic(() => import("@/components/LeafletMap"), {
   ssr: false,
   loading: () => (
@@ -34,9 +36,6 @@ import {
 
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-} from "@/components/ui/card";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -45,7 +44,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { SeverityBadge } from "@/components/SeverityBadge";
 import { Toast } from "@/components/Toast";
 import { createClient } from "@/utils/supabase/client";
 import { LoginButton } from "@/components/ui/LoginButton";
@@ -791,101 +789,113 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 filteredReports.map((report) => {
+                  let severityConfig: Record<string, string> = {
+                    border: 'border-l-teal-400',
+                    tag: 'bg-teal-500/12 text-teal-400',
+                    dot: 'bg-teal-400',
+                    label: 'Low',
+                  };
+                  if (report.severity_score >= 4) {
+                    severityConfig = {
+                      border: 'border-l-rose-500',
+                      tag: 'bg-rose-500/13 text-rose-400',
+                      dot: 'bg-rose-400',
+                      label: 'Critical',
+                    };
+                  } else if (report.severity_score === 3) {
+                    severityConfig = {
+                      border: 'border-l-amber-400',
+                      tag: 'bg-amber-500/13 text-amber-400',
+                      dot: 'bg-amber-400',
+                      label: 'Medium',
+                    };
+                  }
+                  const s = severityConfig;
+                  const relativeTime = dayjs(report.created_at).fromNow();
+
                   return (
-                    <Card
+                    <div
                       key={report.id}
                       onClick={() => setFocusedCoords({ lat: report.latitude, lng: report.longitude })}
-                      className="group/report min-h-[44px] cursor-pointer border-slate-800/50 bg-slate-900/40 transition-all duration-300 hover:bg-slate-800/60 hover:border-cyan-900/50 hover:shadow-[0_0_15px_rgba(8,145,178,0.15)] ring-0"
+                      className={`bg-[#1e2333] border border-white/7 border-l-4 ${s.border} rounded-xl overflow-hidden hover:bg-[#242840] hover:border-white/12 transition-colors cursor-pointer mb-3 last:mb-0`}
                     >
-                      <div className="flex gap-3 p-3">
-                        {/* Thumbnail */}
-                        {report.image_url && (
-                          <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg">
-                            <Image
-                              src={report.image_url}
-                              alt={report.title}
-                              width={80}
-                              height={80}
-                              className="h-full w-full object-cover transition-transform duration-300 group-hover/report:scale-105"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                          </div>
+                      {/* Top content */}
+                      <div className="flex gap-3 p-3.5 pb-0">
+                        {report.image_url ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img src={report.image_url} className="w-14 h-14 rounded-lg object-cover flex-shrink-0 grayscale-[30%]" alt={report.title} />
+                        ) : (
+                          <div className="w-14 h-14 rounded-lg bg-[#252d45] flex-shrink-0" />
                         )}
-
-                        {/* Content */}
-                        <div className="flex flex-1 flex-col justify-between min-w-0">
-                          <div>
-                            <div className="flex items-start justify-between">
-                              <h3 className="text-sm font-semibold text-slate-200 leading-snug line-clamp-1">
-                                {report.title}
-                              </h3>
-                              {session?.user?.id === report.user_id && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteReport(report.id);
-                                  }}
-                                  className="ml-2 flex-shrink-0 text-slate-500 hover:text-red-400 transition-colors"
-                                  title="Delete your report"
-                                >
-                                  <Trash2 className="size-4" />
-                                </button>
-                              )}
-                            </div>
-                            <p className="mt-0.5 text-xs text-slate-500 line-clamp-3">
-                              {report.description}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between">
+                            <p className="font-display font-semibold text-[13.5px] text-[#e8eaf0] leading-snug mb-1 line-clamp-1">
+                              {report.title}
                             </p>
+                            {session?.user?.id === report.user_id && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteReport(report.id);
+                                }}
+                                className="ml-2 flex-shrink-0 text-[#7a8199] hover:text-rose-400 transition-colors"
+                                title="Delete your report"
+                              >
+                                <Trash2 className="size-3.5" />
+                              </button>
+                            )}
                           </div>
-
-                          <div className="mt-2 flex items-center justify-between gap-2">
-                            <SeverityBadge score={report.severity_score} />
-                            <span className="flex items-center gap-1 text-xs text-slate-600">
-                              <Clock className="size-3" />
-                              {new Date(
-                                report.created_at
-                              ).toLocaleDateString()}
-                            </span>
-                          </div>
+                          <p className="text-xs text-[#7a8199] leading-relaxed line-clamp-2">
+                            {report.description}
+                          </p>
                         </div>
                       </div>
 
-                      {/* ── Verify Fix or Resolved State & Navigation ── */}
-                      <div className="border-t border-slate-800/60 px-3 py-2 flex items-center gap-2">
-                        <div className="flex-1">
-                          {report.status === "Resolved" ? (
-                            <div className="flex items-center justify-center gap-1.5 h-7 w-full text-xs font-medium text-emerald-400 bg-emerald-500/10 rounded-md border border-emerald-500/20 cursor-default">
-                              <CheckCircle2 className="size-3.5" />
-                              Resolved
-                            </div>
-                          ) : (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              disabled={!session}
-                              title={!session ? "Login to earn Civic Points" : ""}
-                              className="w-full border-slate-700/60 text-slate-400 hover:border-emerald-500/50 hover:text-emerald-400 hover:bg-emerald-500/5 cursor-pointer gap-1.5 h-7 text-xs disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-500"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openVerifyDialog(report);
-                              }}
-                            >
-                              <CheckCircle2 className="size-3.5" />
-                              Verify Fix
-                            </Button>
-                          )}
-                        </div>
+                      {/* Meta row */}
+                      <div className="flex items-center gap-2 px-3.5 py-2 mt-1">
+                        <span className={`flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-md ${s.tag}`}>
+                          <span className={`w-1 h-1 rounded-full ${s.dot}`} />
+                          {s.label}
+                        </span>
+                        <span className="ml-auto text-[11px] text-[#4a5068] flex items-center gap-1">
+                          <Clock className="size-3" />
+                          {relativeTime}
+                        </span>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex gap-2 px-3.5 pb-3.5">
+                        {report.status === "Resolved" ? (
+                          <div className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium text-[#7a8199] border border-white/10 rounded-lg cursor-default bg-white/5">
+                            <CheckCircle2 className="size-3.5" />
+                            Resolved
+                          </div>
+                        ) : (
+                          <button
+                            disabled={!session}
+                            title={!session ? "Login to earn Civic Points" : ""}
+                            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium text-[#7a8199] border border-white/10 rounded-lg hover:bg-white/5 hover:text-[#e8eaf0] transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-transparent"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openVerifyDialog(report);
+                            }}
+                          >
+                            <CheckCircle2 className="size-3.5" />
+                            Verify Fix
+                          </button>
+                        )}
                         <a
                           href={`https://www.google.com/maps/dir/?api=1&destination=${report.latitude},${report.longitude}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center justify-center h-7 px-3 gap-1.5 text-xs font-medium rounded-full bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200 transition-colors"
+                          className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium text-teal-400 bg-teal-500/12 border border-teal-500/25 rounded-lg hover:bg-teal-500/20 transition-colors"
                         >
                           <Navigation className="size-3.5" />
                           Navigate
                         </a>
                       </div>
-                    </Card>
+                    </div>
                   );
                 })
               )}
