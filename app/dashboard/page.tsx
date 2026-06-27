@@ -3,6 +3,8 @@
 import React, { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
+import { motion, AnimatePresence, Variants } from "motion/react";
+import BlurText from "@/components/ui/BlurText";
 import { Session } from "@supabase/supabase-js";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -32,6 +34,8 @@ import {
   Trash2,
   ImageIcon,
   Navigation,
+  List,
+  Map,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -51,6 +55,8 @@ import TiltedCard from "@/components/ui/TiltedCard";
 import BorderGlow from "@/components/ui/BorderGlow";
 import Folder from "@/components/ui/Folder";
 import GooeyNav from "@/components/ui/GooeyNav";
+import LaserFlow from "@/components/ui/LaserFlow";
+import RotatingText from "@/components/ui/RotatingText";
 import { createClient } from "@/utils/supabase/client";
 import { LoginButton } from "@/components/ui/LoginButton";
 
@@ -158,6 +164,42 @@ export default function DashboardPage() {
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const verifyFileInputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // --- Highlight Filter State ---
+  const [highlightedFilter, setHighlightedFilter] = useState<'active' | 'resolved' | 'attention' | 'critical' | null>(null);
+
+  // --- Intro Animation State ---
+  const [showIntro, setShowIntro] = useState(true);
+  const [showIntroOverlay, setShowIntroOverlay] = useState(true);
+  const [mobileView, setMobileView] = useState<'feed' | 'map'>('feed');
+  const [headerScale, setHeaderScale] = useState(0.28);
+
+  useEffect(() => {
+    const handleResize = () => setHeaderScale(window.innerWidth < 640 ? 0.5 : 0.28);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    // 1. Fade out the laser overlay first
+    const timer1 = setTimeout(() => setShowIntroOverlay(false), 6000);
+    // 2. Then shrink the logo and fade in the dashboard
+    const timer2 = setTimeout(() => setShowIntro(false), 6800);
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (highlightedFilter) {
+      const timer = setTimeout(() => {
+        setHighlightedFilter(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [highlightedFilter]);
 
   // --- Derived filtered reports ---
   const filteredReports = useMemo(() => {
@@ -489,9 +531,115 @@ export default function DashboardPage() {
     }
   };
 
+  // --- Animation Variants ---
+  const containerVariants: Variants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15,
+        delayChildren: 0.2,
+      },
+    },
+  };
+
+  const itemVariants: Variants = {
+    hidden: { opacity: 0, y: 30, scale: 0.95 },
+    show: { 
+      opacity: 1, 
+      y: 0, 
+      scale: 1, 
+      transition: { type: "spring", stiffness: 300, damping: 24 } 
+    },
+  };
+
   // --- Render ---
   return (
     <div className="dark">
+      {/* ═══════════════════════ INTRO SEQUENCE ═══════════════════════ */}
+      <AnimatePresence>
+        {showIntroOverlay && (
+          <motion.div
+            initial={{ opacity: 1, clipPath: "inset(0% 0 0% 0)" }}
+            exit={{ opacity: 0, clipPath: "inset(100% 0 0% 0)" }}
+            transition={{ duration: 1.2, ease: "easeInOut" }}
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#050505]"
+          >
+            <motion.div 
+              className="absolute inset-0"
+              initial={{ opacity: 0, y: 150 }}
+              animate={{ opacity: 0.6, y: 0 }}
+              transition={{ duration: 1.5, ease: "easeOut" }}
+            >
+              <LaserFlow 
+                color="#cf9eff" 
+                horizontalBeamOffset={-0.02}
+                verticalBeamOffset={-0.45}
+                horizontalSizing={2}
+                verticalSizing={4.4}
+                wispDensity={2.1}
+                wispSpeed={27}
+                wispIntensity={20}
+                flowSpeed={0.43}
+                flowStrength={0.76}
+                fogIntensity={1}
+                fogScale={0.1}
+                fogFallSpeed={0.26}
+                decay={3}
+                falloffStart={2.01}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ═══════════════════════ FLOATING LOGO ═══════════════════════ */}
+      <motion.div
+        className="fixed z-[200] font-display font-bold text-4xl sm:text-7xl tracking-tight leading-none flex items-center origin-top-left pointer-events-none whitespace-nowrap"
+        initial={false}
+        animate={showIntro ? "center" : "header"}
+        variants={{
+          center: { top: "50%", left: "50%", x: "-50%", y: "-50%", scale: 1 },
+          header: { top: "18px", left: "70px", x: 0, y: 0, scale: headerScale }
+        }}
+        transition={{ duration: 1.2, ease: "easeInOut" }}
+      >
+        {showIntroOverlay ? (
+          <>
+            <BlurText
+              text="Civic"
+              delay={250}
+              animateBy="letters"
+              direction="top"
+              className="text-white mt-1"
+            />
+            <BlurText
+              text="Pulse"
+              delay={250}
+              animateBy="letters"
+              direction="top"
+              className="ml-2 sm:ml-3 bg-cyan-400 text-black px-4 pt-2 pb-1 rounded-xl overflow-hidden flex items-center justify-center leading-none"
+            />
+          </>
+        ) : (
+          <>
+            <span className="text-white mt-1">Civic</span>
+            <RotatingText
+              texts={['Pulse', 'Radar']}
+              mainClassName="ml-2 sm:ml-3 bg-cyan-400 text-black px-4 pt-2 pb-1 rounded-xl overflow-hidden flex items-center justify-center leading-none"
+              staggerFrom={"last"}
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "-120%" }}
+              staggerDuration={0.025}
+              splitLevelClassName="overflow-hidden"
+              transition={{ type: "spring", damping: 30, stiffness: 400 }}
+              rotationInterval={4000}
+            />
+          </>
+        )}
+      </motion.div>
+
       {/* Toast notification */}
       {toast && (
         <Toast
@@ -501,7 +649,12 @@ export default function DashboardPage() {
         />
       )}
 
-      <main className="flex h-screen flex-col overflow-hidden bg-black text-slate-100">
+      <motion.main 
+        className="flex h-screen flex-col overflow-hidden bg-black text-slate-100"
+        initial={{ opacity: 0, y: 100 }}
+        animate={!showIntro ? { opacity: 1, y: 0 } : { opacity: 0, y: 100 }}
+        transition={{ duration: 1, ease: "easeOut" }}
+      >
         {/* ═══════════════════════ HEADER ═══════════════════════ */}
         <header className="relative z-20 flex items-center justify-between border-b border-[#111111] bg-[#050505] px-6 py-3">
           <div className="flex items-center gap-2.5">
@@ -512,41 +665,52 @@ export default function DashboardPage() {
               </div>
             </div>
             <div>
-              <p className="font-display font-bold text-base text-white tracking-tight leading-tight">CivicPulse</p>
-              <p className="text-[11px] text-[#7a8199] tracking-wide leading-tight">Community Issue Tracker</p>
+              <div className="flex items-center">
+                  {/* Invisible placeholder for the floating logo */}
+                  <div className="w-[120px] h-[28px]" />
+              </div>
+              <p className="hidden md:block text-[11px] text-[#7a8199] tracking-wide leading-tight">Community Issue Tracker</p>
             </div>
           </div>
 
           {/* Stats row */}
           <div className="hidden items-center gap-3 md:flex">
-            <BorderGlow borderRadius={30} backgroundColor="#000000" glowColor="173 80 50" colors={['#2dd4bf', '#14b8a6', '#0f766e']} edgeSensitivity={0} glowRadius={50} coneSpread={2}>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-[30px] border text-xs bg-teal-500/10 border-teal-500/20 text-teal-400">
-                <div className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-[dot-breathe_2s_ease-in-out_infinite]" />
-                <span className="font-semibold font-display text-[#e8eaf0]">{activeReports.length}</span>
-                <span className="text-[#7a8199]">active</span>
-              </div>
-            </BorderGlow>
-            <BorderGlow borderRadius={30} backgroundColor="#000000" glowColor="0 0 100" colors={['#ffffff', '#e5e7eb', '#d1d5db']} edgeSensitivity={0} glowRadius={50} coneSpread={2}>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-[30px] border text-xs bg-white/5 border-white/10 text-white">
-                <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
-                <span className="font-semibold font-display text-[#e8eaf0]">{resolvedReports.length}</span>
-                <span className="text-[#7a8199]">resolved</span>
-              </div>
-            </BorderGlow>
-            <BorderGlow borderRadius={30} backgroundColor="#000000" glowColor="43 96 56" colors={['#fbbf24', '#f59e0b', '#d97706']} edgeSensitivity={0} glowRadius={50} coneSpread={2}>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-[30px] border text-xs bg-amber-500/10 border-amber-500/20 text-amber-400">
-                <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                <span className="font-semibold font-display text-[#e8eaf0]">{needsAttentionCount}</span>
-                <span className="text-[#7a8199]">attention</span>
-              </div>
-            </BorderGlow>
-            <BorderGlow borderRadius={30} backgroundColor="#000000" glowColor="350 89 60" colors={['#f43f5e', '#e11d48', '#be123c']} edgeSensitivity={0} glowRadius={50} coneSpread={2}>
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-[30px] border text-xs bg-rose-500/10 border-rose-500/20 text-rose-400">
-                <div className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-[dot-blink_1.8s_ease-in-out_infinite]" />
-                <span className="font-semibold font-display text-[#e8eaf0]">{criticalCount}</span>
-                <span className="text-[#7a8199]">critical</span>
-              </div>
-            </BorderGlow>
+            <div className="cursor-pointer transition-transform hover:scale-105 active:scale-95" onClick={() => setHighlightedFilter(p => p === 'active' ? null : 'active')}>
+              <BorderGlow borderRadius={30} backgroundColor="#000000" glowColor="173 80 50" colors={['#2dd4bf', '#14b8a6', '#0f766e']} edgeSensitivity={0} glowRadius={50} coneSpread={2}>
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-[30px] border text-xs bg-teal-500/10 text-teal-400 transition-colors ${highlightedFilter === 'active' ? 'border-teal-400 bg-teal-500/20' : 'border-teal-500/20'}`}>
+                  <div className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-[dot-breathe_2s_ease-in-out_infinite]" />
+                  <span className="font-semibold font-display text-[#e8eaf0]">{activeReports.length}</span>
+                  <span className="text-[#7a8199]">active</span>
+                </div>
+              </BorderGlow>
+            </div>
+            <div className="cursor-pointer transition-transform hover:scale-105 active:scale-95" onClick={() => setHighlightedFilter(p => p === 'resolved' ? null : 'resolved')}>
+              <BorderGlow borderRadius={30} backgroundColor="#000000" glowColor="0 0 100" colors={['#ffffff', '#e5e7eb', '#d1d5db']} edgeSensitivity={0} glowRadius={50} coneSpread={2}>
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-[30px] border text-xs bg-white/5 text-white transition-colors ${highlightedFilter === 'resolved' ? 'border-white bg-white/10' : 'border-white/10'}`}>
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                  <span className="font-semibold font-display text-[#e8eaf0]">{resolvedReports.length}</span>
+                  <span className="text-[#7a8199]">resolved</span>
+                </div>
+              </BorderGlow>
+            </div>
+            <div className="cursor-pointer transition-transform hover:scale-105 active:scale-95" onClick={() => setHighlightedFilter(p => p === 'attention' ? null : 'attention')}>
+              <BorderGlow borderRadius={30} backgroundColor="#000000" glowColor="43 96 56" colors={['#fbbf24', '#f59e0b', '#d97706']} edgeSensitivity={0} glowRadius={50} coneSpread={2}>
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-[30px] border text-xs bg-amber-500/10 text-amber-400 transition-colors ${highlightedFilter === 'attention' ? 'border-amber-400 bg-amber-500/20' : 'border-amber-500/20'}`}>
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                  <span className="font-semibold font-display text-[#e8eaf0]">{needsAttentionCount}</span>
+                  <span className="text-[#7a8199]">attention</span>
+                </div>
+              </BorderGlow>
+            </div>
+            <div className="cursor-pointer transition-transform hover:scale-105 active:scale-95" onClick={() => setHighlightedFilter(p => p === 'critical' ? null : 'critical')}>
+              <BorderGlow borderRadius={30} backgroundColor="#000000" glowColor="350 89 60" colors={['#f43f5e', '#e11d48', '#be123c']} edgeSensitivity={0} glowRadius={50} coneSpread={2}>
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-[30px] border text-xs bg-rose-500/10 text-rose-400 transition-colors ${highlightedFilter === 'critical' ? 'border-rose-400 bg-rose-500/20' : 'border-rose-500/20'}`}>
+                  <div className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-[dot-blink_1.8s_ease-in-out_infinite]" />
+                  <span className="font-semibold font-display text-[#e8eaf0]">{criticalCount}</span>
+                  <span className="text-[#7a8199]">critical</span>
+                </div>
+              </BorderGlow>
+            </div>
           </div>
 
           {/* ═══════ Report Issue Dialog ═══════ */}
@@ -741,9 +905,14 @@ export default function DashboardPage() {
         </header>
 
         {/* ═══════════════════════ BODY ═══════════════════════ */}
-        <div className="flex flex-col md:flex-row flex-1 w-full overflow-hidden">
-          {/* ────────── LEFT COLUMN: Report Feed (35%) ────────── */}
-          <aside className="w-full md:w-[400px] lg:w-[450px] h-[50vh] md:h-full overflow-y-auto z-10 bg-black flex flex-col border-r border-[#252d45] shadow-2xl relative">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          animate={showIntro ? "hidden" : "show"}
+          className="flex flex-col md:flex-row flex-1 w-full overflow-hidden"
+        >
+            {/* ────────── LEFT COLUMN: Report Feed (35%) ────────── */}
+            <motion.aside variants={itemVariants} className={`w-full md:w-[400px] lg:w-[450px] ${mobileView === 'feed' ? 'flex' : 'hidden md:flex'} h-full overflow-y-auto z-10 bg-black flex-col border-r border-[#252d45] shadow-2xl relative`}>
             <div className="flex items-center border-b border-[#252d45] gap-4 px-6 pt-3 pb-3">
               <GooeyNav
                 initialActiveIndex={viewMode === 'active' ? 0 : 1}
@@ -824,6 +993,13 @@ export default function DashboardPage() {
                   const relativeTime = dayjs(report.created_at).fromNow();
 
                   const starColor = report.severity_score === 1 ? '#2dd4bf' : report.severity_score === 2 ? '#f43f5e' : '#fbbf24';
+                  const glowColor = report.severity_score === 1 ? '173 80 50' : report.severity_score === 2 ? '350 89 60' : '43 96 56';
+
+                  const isHighlighted = highlightedFilter === 'active' ? report.status !== 'Resolved'
+                                      : highlightedFilter === 'resolved' ? report.status === 'Resolved'
+                                      : highlightedFilter === 'attention' ? (report.status !== 'Resolved' && report.severity_score >= 3)
+                                      : highlightedFilter === 'critical' ? (report.status !== 'Resolved' && report.severity_score >= 4)
+                                      : false;
 
                   return (
                     <TiltedCard
@@ -840,14 +1016,28 @@ export default function DashboardPage() {
                       showTooltip={false}
                       displayOverlayContent={true}
                       overlayContent={
-                        <StarBorder
-                          as="div"
-                          color={starColor}
+                        <BorderGlow
+                          borderRadius={20}
+                          backgroundColor="#0a0a0a"
+                          glowColor={glowColor}
+                          edgeSensitivity={isHighlighted ? 100 : 0}
+                          glowRadius={70}
+                          glowIntensity={isHighlighted ? 6.0 : 1.5}
+                          coneSpread={isHighlighted ? 25 : 3}
+                          colors={[starColor, starColor, starColor]}
                           className="w-full h-full"
-                          innerClassName={`bg-[#0a0a0a] border border-white/7 border-l-4 ${s.border} rounded-[20px] overflow-hidden hover:bg-[#111111] hover:border-white/12 transition-colors cursor-pointer flex flex-col w-full h-full`}
-                          onClick={() => setFocusedCoords({ lat: report.latitude, lng: report.longitude })}
+                          animated={isHighlighted}
+                          loopAnimation={isHighlighted}
+                          animationSpeedMultiplier={isHighlighted ? 3 : 1}
                         >
-                          {/* Top content */}
+                          <StarBorder
+                            as="div"
+                            color={starColor}
+                            className="w-full h-full"
+                            innerClassName={`bg-[#0a0a0a] rounded-[20px] overflow-hidden hover:bg-[#111111] transition-colors cursor-pointer flex flex-col w-full h-full`}
+                            onClick={() => setFocusedCoords({ lat: report.latitude, lng: report.longitude })}
+                          >
+                            {/* Top content */}
                       <div className="flex gap-3 p-3.5 pb-0">
                         {report.image_url ? (
                           /* eslint-disable-next-line @next/next/no-img-element */
@@ -923,20 +1113,24 @@ export default function DashboardPage() {
                           Navigate
                         </a>
                       </div>
-                    </StarBorder>
-                    }
-                  />
-                  );
-                })
+                      </StarBorder>
+                    </BorderGlow>
+                  }
+                />
+              );
+            })
               )}
             </div>
+
+
             
             {/* Smooth blur fade for the scrollable feed */}
             <GradualBlur preset="bottom" height="4rem" zIndex={20} className="pointer-events-none" />
-          </aside>
+            </motion.aside>
 
-          {/* ────────── RIGHT COLUMN: Map (65%) ────────── */}
-          <section className="w-full h-[50vh] md:h-full md:flex-1 relative z-0">
+          {/* ────────── RIGHT COLUMN: Map & Interactions (65%) ────────── */}
+          <motion.section variants={itemVariants} className={`flex-1 relative ${mobileView === 'map' ? 'flex flex-col' : 'hidden md:flex'} h-full`}>
+            {/* Leaflet map taking full background of right column */}
             <LeafletMap reports={filteredReports} viewMode={viewMode} focusCoords={focusedCoords} emphasizedSeverity={emphasizedSeverity} />
 
             {/* Map overlay legend */}
@@ -946,36 +1140,75 @@ export default function DashboardPage() {
                   <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider mr-2">
                     Severity
                   </span>
-                  <div 
-                    className="flex items-center gap-1.5 cursor-pointer hover:bg-slate-800/80 hover:scale-[1.3] px-2.5 py-1.5 rounded-lg transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group relative transform origin-bottom"
-                    onClick={() => handleDockClick(1)}
+                  <BorderGlow
+                    className="hover:scale-[1.3] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform origin-bottom group cursor-pointer"
+                    borderRadius={8}
+                    backgroundColor="#020617"
+                    glowColor="173 80 50"
+                    edgeSensitivity={0}
+                    glowRadius={70}
+                    glowIntensity={1.0}
+                    coneSpread={3}
+                    disableCursorTracking
+                    animateOnHover
                   >
-                    <span className="size-2.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.6)]" />
-                    <span className="text-xs font-medium text-slate-300 group-hover:text-cyan-400 transition-colors">Low</span>
-                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] uppercase font-bold px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none border border-slate-700 shadow-xl whitespace-nowrap translate-y-2 group-hover:translate-y-0">
-                      Click to highlight
+                    <div 
+                      className="flex items-center gap-1.5 hover:bg-slate-800/80 px-2.5 py-1.5 rounded-lg transition-all duration-300 relative h-full w-full"
+                      onClick={() => handleDockClick(1)}
+                    >
+                      <span className="size-2.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.6)]" />
+                      <span className="text-xs font-medium text-slate-300 group-hover:text-cyan-400 transition-colors">Low</span>
+                      <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] uppercase font-bold px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none border border-slate-700 shadow-xl whitespace-nowrap translate-y-2 group-hover:translate-y-0">
+                        Click to highlight
+                      </div>
                     </div>
-                  </div>
-                  <div 
-                    className="flex items-center gap-1.5 cursor-pointer hover:bg-slate-800/80 hover:scale-[1.3] px-2.5 py-1.5 rounded-lg transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group relative transform origin-bottom"
-                    onClick={() => handleDockClick(2)}
+                  </BorderGlow>
+                  <BorderGlow
+                    className="hover:scale-[1.3] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform origin-bottom group cursor-pointer"
+                    borderRadius={8}
+                    backgroundColor="#020617"
+                    glowColor="43 96 56"
+                    edgeSensitivity={0}
+                    glowRadius={70}
+                    glowIntensity={1.0}
+                    coneSpread={3}
+                    disableCursorTracking
+                    animateOnHover
                   >
-                    <span className="size-2.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
-                    <span className="text-xs font-medium text-slate-300 group-hover:text-amber-400 transition-colors">Medium</span>
-                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] uppercase font-bold px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none border border-slate-700 shadow-xl whitespace-nowrap translate-y-2 group-hover:translate-y-0">
-                      Click to highlight
+                    <div 
+                      className="flex items-center gap-1.5 hover:bg-slate-800/80 px-2.5 py-1.5 rounded-lg transition-all duration-300 relative h-full w-full"
+                      onClick={() => handleDockClick(2)}
+                    >
+                      <span className="size-2.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
+                      <span className="text-xs font-medium text-slate-300 group-hover:text-amber-400 transition-colors">Medium</span>
+                      <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] uppercase font-bold px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none border border-slate-700 shadow-xl whitespace-nowrap translate-y-2 group-hover:translate-y-0">
+                        Click to highlight
+                      </div>
                     </div>
-                  </div>
-                  <div 
-                    className="flex items-center gap-1.5 cursor-pointer hover:bg-slate-800/80 hover:scale-[1.3] px-2.5 py-1.5 rounded-lg transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] group relative transform origin-bottom"
-                    onClick={() => handleDockClick(3)}
+                  </BorderGlow>
+                  <BorderGlow
+                    className="hover:scale-[1.3] transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform origin-bottom group cursor-pointer"
+                    borderRadius={8}
+                    backgroundColor="#020617"
+                    glowColor="350 89 60"
+                    edgeSensitivity={0}
+                    glowRadius={70}
+                    glowIntensity={1.0}
+                    coneSpread={3}
+                    disableCursorTracking
+                    animateOnHover
                   >
-                    <span className="size-2.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
-                    <span className="text-xs font-medium text-slate-300 group-hover:text-red-400 transition-colors">Critical</span>
-                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] uppercase font-bold px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none border border-slate-700 shadow-xl whitespace-nowrap translate-y-2 group-hover:translate-y-0">
-                      Click to highlight
+                    <div 
+                      className="flex items-center gap-1.5 hover:bg-slate-800/80 px-2.5 py-1.5 rounded-lg transition-all duration-300 relative h-full w-full"
+                      onClick={() => handleDockClick(3)}
+                    >
+                      <span className="size-2.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
+                      <span className="text-xs font-medium text-slate-300 group-hover:text-red-400 transition-colors">Critical</span>
+                      <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] uppercase font-bold px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none border border-slate-700 shadow-xl whitespace-nowrap translate-y-2 group-hover:translate-y-0">
+                        Click to highlight
+                      </div>
                     </div>
-                  </div>
+                  </BorderGlow>
                 </>
               ) : (
                 <>
@@ -989,8 +1222,8 @@ export default function DashboardPage() {
                 </>
               )}
             </div>
-          </section>
-        </div>
+          </motion.section>
+        </motion.div>
 
         {/* ═══════════════════ VERIFICATION DIALOG ═══════════════════ */}
         <Dialog
@@ -1195,7 +1428,32 @@ export default function DashboardPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </main>
+      </motion.main>
+
+      {/* ═══════════════════════ MOBILE BOTTOM NAVIGATION ═══════════════════════ */}
+      {!showIntro && (
+        <motion.div 
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 1, type: "spring", stiffness: 200, damping: 25 }}
+          className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[150] flex items-center bg-[#111111]/90 backdrop-blur-xl border border-[#252d45] rounded-full p-1.5 shadow-2xl"
+        >
+          <button
+            onClick={() => setMobileView('feed')}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all ${mobileView === 'feed' ? 'bg-cyan-500 text-black shadow-[0_0_15px_rgba(6,182,212,0.4)]' : 'text-slate-400 hover:text-white'}`}
+          >
+            <List size={18} />
+            Feed
+          </button>
+          <button
+            onClick={() => setMobileView('map')}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all ${mobileView === 'map' ? 'bg-cyan-500 text-black shadow-[0_0_15px_rgba(6,182,212,0.4)]' : 'text-slate-400 hover:text-white'}`}
+          >
+            <Map size={18} />
+            Map
+          </button>
+        </motion.div>
+      )}
     </div>
   );
 }

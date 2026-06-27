@@ -13,6 +13,11 @@ interface BorderGlowProps {
   glowIntensity?: number;
   coneSpread?: number;
   animated?: boolean;
+  animateOnHover?: boolean;
+  disableCursorTracking?: boolean;
+  loopAnimation?: boolean;
+  animationSpeedMultiplier?: number;
+  hoverDelay?: number;
   colors?: string[];
   fillOpacity?: number;
 }
@@ -48,15 +53,30 @@ interface AnimateOpts {
 }
 
 function animateValue({ start = 0, end = 100, duration = 1000, delay = 0, ease = easeOutCubic, onUpdate, onEnd }: AnimateOpts) {
+  let rafId: number;
+  let timeoutId: ReturnType<typeof setTimeout>;
+  let aborted = false;
+  
   const t0 = performance.now() + delay;
   function tick() {
+    if (aborted) return;
     const elapsed = performance.now() - t0;
-    const t = Math.min(elapsed / duration, 1);
-    onUpdate(start + (end - start) * ease(t));
-    if (t < 1) requestAnimationFrame(tick);
+    const t = Math.max(0, Math.min(elapsed / duration, 1));
+    if (elapsed >= 0) {
+      onUpdate(start + (end - start) * ease(t));
+    }
+    if (t < 1) rafId = requestAnimationFrame(tick);
     else if (onEnd) onEnd();
   }
-  setTimeout(() => requestAnimationFrame(tick), delay);
+  timeoutId = setTimeout(() => {
+    if (!aborted) rafId = requestAnimationFrame(tick);
+  }, delay);
+
+  return () => {
+    aborted = true;
+    clearTimeout(timeoutId);
+    cancelAnimationFrame(rafId);
+  };
 }
 
 const GRADIENT_POSITIONS = ['80% 55%', '69% 34%', '8% 6%', '41% 38%', '86% 85%', '82% 18%', '51% 4%'];
@@ -83,10 +103,20 @@ const BorderGlow: React.FC<BorderGlowProps> = ({
   glowIntensity = 1.0,
   coneSpread = 25,
   animated = false,
+  animateOnHover = false,
+  disableCursorTracking = false,
+  loopAnimation = false,
+  animationSpeedMultiplier = 1,
+  hoverDelay = 0,
   colors = ['#c084fc', '#f472b6', '#38bdf8'],
   fillOpacity = 0.5,
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activeAnimationsRef = useRef<(() => void)[]>([]);
+  const loopRef = useRef(loopAnimation);
+  useEffect(() => { loopRef.current = loopAnimation; }, [loopAnimation]);
+
   const [isHovered, setIsHovered] = useState(false);
   const [cursorAngle, setCursorAngle] = useState(45);
   const [edgeProximity, setEdgeProximity] = useState(0);
@@ -120,6 +150,7 @@ const BorderGlow: React.FC<BorderGlowProps> = ({
   }, [getCenterOfElement]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (disableCursorTracking) return;
     const card = cardRef.current;
     if (!card) return;
     const rect = card.getBoundingClientRect();
@@ -127,27 +158,47 @@ const BorderGlow: React.FC<BorderGlowProps> = ({
     const y = e.clientY - rect.top;
     setEdgeProximity(getEdgeProximity(card, x, y));
     setCursorAngle(getCursorAngle(card, x, y));
-  }, [getEdgeProximity, getCursorAngle]);
+  }, [getEdgeProximity, getCursorAngle, disableCursorTracking]);
 
-  useEffect(() => {
-    if (!animated) return;
+  const stopAnimations = useCallback(() => {
+    activeAnimationsRef.current.forEach(abort => abort());
+    activeAnimationsRef.current = [];
+    setSweepActive(false);
+  }, []);
+
+  const playSweepAnimation = useCallback(() => {
+    stopAnimations();
     const angleStart = 110;
     const angleEnd = 465;
     setSweepActive(true);
     setCursorAngle(angleStart);
 
-    animateValue({ duration: 500, onUpdate: v => setEdgeProximity(v / 100) });
-    animateValue({ ease: easeInCubic, duration: 1500, end: 50, onUpdate: v => {
-      setCursorAngle((angleEnd - angleStart) * (v / 100) + angleStart);
-    }});
-    animateValue({ ease: easeOutCubic, delay: 1500, duration: 2250, start: 50, end: 100, onUpdate: v => {
-      setCursorAngle((angleEnd - angleStart) * (v / 100) + angleStart);
-    }});
-    animateValue({ ease: easeInCubic, delay: 2500, duration: 1500, start: 100, end: 0,
-      onUpdate: v => setEdgeProximity(v / 100),
-      onEnd: () => setSweepActive(false),
-    });
-  }, [animated]);
+    const m = 1 / animationSpeedMultiplier;
+
+    activeAnimationsRef.current = [
+      animateValue({ duration: 500 * m, onUpdate: v => setEdgeProximity(v / 100) }),
+      animateValue({ ease: easeInCubic, duration: 1500 * m, end: 50, onUpdate: v => {
+        setCursorAngle((angleEnd - angleStart) * (v / 100) + angleStart);
+      }}),
+      animateValue({ ease: easeOutCubic, delay: 1500 * m, duration: 2250 * m, start: 50, end: 100, onUpdate: v => {
+        setCursorAngle((angleEnd - angleStart) * (v / 100) + angleStart);
+      }}),
+      animateValue({ ease: easeInCubic, delay: 2500 * m, duration: 1500 * m, start: 100, end: 0,
+        onUpdate: v => setEdgeProximity(v / 100),
+        onEnd: () => {
+          if (loopRef.current) {
+            playSweepAnimation();
+          } else {
+            setSweepActive(false);
+          }
+        },
+      })
+    ];
+  }, [stopAnimations, animationSpeedMultiplier]);
+
+  useEffect(() => {
+    if (animated) playSweepAnimation();
+  }, [animated, playSweepAnimation]);
 
   const colorSensitivity = edgeSensitivity + 20;
   const isVisible = isHovered || sweepActive;
@@ -167,9 +218,30 @@ const BorderGlow: React.FC<BorderGlowProps> = ({
     <div
       ref={cardRef}
       onPointerMove={handlePointerMove}
-      onPointerEnter={() => setIsHovered(true)}
-      onPointerLeave={() => setIsHovered(false)}
-      className={`relative grid isolate border border-white/15 ${className}`}
+      onPointerEnter={() => {
+        setIsHovered(true);
+        if (animateOnHover && !sweepActive) {
+          if (hoverDelay > 0) {
+            hoverTimeoutRef.current = setTimeout(() => {
+              playSweepAnimation();
+            }, hoverDelay);
+          } else {
+            playSweepAnimation();
+          }
+        }
+      }}
+      onPointerLeave={() => {
+        setIsHovered(false);
+        if (hoverTimeoutRef.current) {
+          clearTimeout(hoverTimeoutRef.current);
+          hoverTimeoutRef.current = null;
+        }
+        if (animateOnHover) {
+          stopAnimations();
+          setEdgeProximity(0); // Instantly drop proximity
+        }
+      }}
+      className={`relative grid isolate ${className}`}
       style={{
         background: backgroundColor,
         borderRadius: `${borderRadius}px`,
