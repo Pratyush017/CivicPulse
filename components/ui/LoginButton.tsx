@@ -11,6 +11,7 @@ interface Profile {
 }
 
 import StarBorder from "@/components/ui/StarBorder";
+import { LogOut } from "lucide-react";
 
 export function LoginButton() {
   const [session, setSession] = useState<Session | null>(null);
@@ -106,7 +107,8 @@ export function LoginButton() {
           className="ml-2 cursor-pointer"
           innerClassName="bg-slate-950 border border-white/10 hover:bg-slate-900 text-xs font-medium text-[#7a8199] hover:text-[#e8eaf0] px-3 py-1.5 flex items-center justify-center rounded-[20px] transition-colors"
         >
-          Sign out
+          <span className="hidden sm:inline">Sign out</span>
+          <LogOut className="sm:hidden size-4" />
         </StarBorder>
       </div>
     );
@@ -134,7 +136,8 @@ export function LoginButton() {
           />
           <path d="M1 1h22v22H1z" fill="none" />
         </svg>
-        Sign in with Google
+        <span className="hidden sm:inline">Sign in with Google</span>
+        <span className="sm:hidden">Sign in</span>
       </div>
     </StarBorder>
   );

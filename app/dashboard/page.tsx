@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import { motion, AnimatePresence, Variants } from "motion/react";
 import BlurText from "@/components/ui/BlurText";
+import BubbleMenu from "@/components/ui/BubbleMenu";
 import { Session } from "@supabase/supabase-js";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -669,7 +670,7 @@ export default function DashboardPage() {
                   {/* Invisible placeholder for the floating logo */}
                   <div className="w-[120px] h-[28px]" />
               </div>
-              <p className="hidden md:block text-[11px] text-[#7a8199] tracking-wide leading-tight">Community Issue Tracker</p>
+              <p className="text-[9px] md:text-[11px] text-[#7a8199] tracking-wide leading-tight">Community Issue Tracker</p>
             </div>
           </div>
 
@@ -728,17 +729,19 @@ export default function DashboardPage() {
                   render={
                     <Button 
                       disabled={!session || reportCooldown > 0}
-                      className="bg-teal-400 text-[#0f1117] font-bold font-display hover:bg-teal-300 transition-colors cursor-pointer gap-2 px-4 py-2 h-9 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-400 disabled:shadow-none"
+                      className="bg-teal-400 text-[#0f1117] font-bold font-display hover:bg-teal-300 transition-colors cursor-pointer gap-2 px-2 sm:px-4 py-2 h-9 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-400 disabled:shadow-none"
                     >
                       {reportCooldown > 0 ? (
                         <>
                           <Timer className="size-4" />
-                          Wait {reportCooldown}s
+                          <span className="hidden sm:inline">Wait {reportCooldown}s</span>
+                          <span className="sm:hidden">{reportCooldown}s</span>
                         </>
                       ) : (
                         <>
                           <Plus className="size-4" />
-                          Report Issue
+                          <span className="hidden sm:inline">Report Issue</span>
+                          <span className="sm:hidden">Report</span>
                         </>
                       )}
                     </Button>
@@ -1413,14 +1416,9 @@ export default function DashboardPage() {
                     <Loader2 className="size-4 animate-spin" />
                     AI is analyzing repair…
                   </>
-                ) : verifyResult ? (
-                  <>
-                    <CheckCircle2 className="size-4" />
-                    Analysis Complete
-                  </>
                 ) : (
                   <>
-                    <Search className="size-4" />
+                    <Search className="size-5 text-emerald-400" />
                     Verify Fix
                   </>
                 )}
@@ -1428,32 +1426,93 @@ export default function DashboardPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Smooth blur fade for the scrollable feed */}
+        <GradualBlur preset="bottom" height="4rem" zIndex={20} className="pointer-events-none" />
+
+        {/* Mobile Floating Actions: Map Toggle & Bubble Menu */}
+        <div className="md:hidden">
+          {/* Bubble Menu Toggle (Bottom Left) */}
+          <div className="fixed bottom-[88px] sm:bottom-6 left-6 z-[100]">
+            <BubbleMenu 
+              logo={null}
+              className="relative top-0 left-0 right-0 p-0 m-0 border-none justify-start"
+              menuBg="#050505"
+              menuContentColor="#fff"
+              useFixedPosition={false}
+              items={[
+                {
+                  label: (
+                    <div className="flex flex-col items-center justify-center pointer-events-none">
+                      <span className="text-3xl font-display font-bold text-teal-400">{activeReports.length}</span>
+                      <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Active</span>
+                    </div>
+                  ),
+                  href: '#',
+                  rotation: -8,
+                  hoverStyles: { bgColor: '#0f766e', textColor: '#ffffff' },
+                  onClick: () => setHighlightedFilter(p => p === 'active' ? null : 'active')
+                },
+                {
+                  label: (
+                    <div className="flex flex-col items-center justify-center pointer-events-none">
+                      <span className="text-3xl font-display font-bold text-green-400">{resolvedReports.length}</span>
+                      <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Resolved</span>
+                    </div>
+                  ),
+                  href: '#',
+                  rotation: 8,
+                  hoverStyles: { bgColor: '#166534', textColor: '#ffffff' },
+                  onClick: () => setHighlightedFilter(p => p === 'resolved' ? null : 'resolved')
+                },
+                {
+                  label: (
+                    <div className="flex flex-col items-center justify-center pointer-events-none">
+                      <span className="text-3xl font-display font-bold text-amber-400">{needsAttentionCount}</span>
+                      <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Attention</span>
+                    </div>
+                  ),
+                  href: '#',
+                  rotation: -8,
+                  hoverStyles: { bgColor: '#b45309', textColor: '#ffffff' },
+                  onClick: () => setHighlightedFilter(p => p === 'attention' ? null : 'attention')
+                },
+                {
+                  label: (
+                    <div className="flex flex-col items-center justify-center pointer-events-none">
+                      <span className="text-3xl font-display font-bold text-rose-400">{criticalCount}</span>
+                      <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Critical</span>
+                    </div>
+                  ),
+                  href: '#',
+                  rotation: 8,
+                  hoverStyles: { bgColor: '#be123c', textColor: '#ffffff' },
+                  onClick: () => setHighlightedFilter(p => p === 'critical' ? null : 'critical')
+                }
+              ]}
+            />
+          </div>
+
+          {/* Bottom Navigation for Feed/Map */}
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-1.5 p-1.5 bg-[#0a0f1a]/80 backdrop-blur-xl border border-[#1e293b]/50 rounded-2xl shadow-2xl">
+            <button 
+              onClick={() => setMobileView('feed')} 
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-300 font-semibold tracking-wide ${mobileView === 'feed' ? 'bg-cyan-500/20 text-cyan-400 shadow-[inset_0_0_12px_rgba(6,182,212,0.3)]' : 'text-slate-400 hover:text-slate-200'}`}
+            >
+              <List className="size-4" />
+              <span className="text-xs uppercase">Feed</span>
+            </button>
+            <button 
+              onClick={() => setMobileView('map')} 
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-300 font-semibold tracking-wide ${mobileView === 'map' ? 'bg-cyan-500/20 text-cyan-400 shadow-[inset_0_0_12px_rgba(6,182,212,0.3)]' : 'text-slate-400 hover:text-slate-200'}`}
+            >
+              <MapPin className="size-4" />
+              <span className="text-xs uppercase">Map</span>
+            </button>
+          </div>
+        </div>
       </motion.main>
 
-      {/* ═══════════════════════ MOBILE BOTTOM NAVIGATION ═══════════════════════ */}
-      {!showIntro && (
-        <motion.div 
-          initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 1, type: "spring", stiffness: 200, damping: 25 }}
-          className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-[150] flex items-center bg-[#111111]/90 backdrop-blur-xl border border-[#252d45] rounded-full p-1.5 shadow-2xl"
-        >
-          <button
-            onClick={() => setMobileView('feed')}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all ${mobileView === 'feed' ? 'bg-cyan-500 text-black shadow-[0_0_15px_rgba(6,182,212,0.4)]' : 'text-slate-400 hover:text-white'}`}
-          >
-            <List size={18} />
-            Feed
-          </button>
-          <button
-            onClick={() => setMobileView('map')}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all ${mobileView === 'map' ? 'bg-cyan-500 text-black shadow-[0_0_15px_rgba(6,182,212,0.4)]' : 'text-slate-400 hover:text-white'}`}
-          >
-            <Map size={18} />
-            Map
-          </button>
-        </motion.div>
-      )}
     </div>
   );
 }
