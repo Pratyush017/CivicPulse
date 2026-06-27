@@ -55,16 +55,11 @@ export function LoginButton() {
   }, [supabase, fetchProfile]);
 
   const handleSignIn = async () => {
-    // If testing locally, stay on localhost. Otherwise, use the foolproof hardcoded link for judges.
-    const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-    const redirectUrl = isLocal 
-      ? `${window.location.origin}/dashboard`
-      : "https://ais-dev-vepbjhdkqtxejrdobw2ter-708692642143.asia-southeast1.run.app/dashboard";
-
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: redirectUrl,
+        // This dynamically reads the current domain the user is browsing!
+        redirectTo: `${window.location.origin}/dashboard`,
       },
     });
   };
