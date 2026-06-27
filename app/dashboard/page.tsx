@@ -59,7 +59,7 @@ import GooeyNav from "@/components/ui/GooeyNav";
 import LaserFlow from "@/components/ui/LaserFlow";
 import RotatingText from "@/components/ui/RotatingText";
 import { createClient } from "@/utils/supabase/client";
-import { LoginButton } from "@/components/ui/LoginButton";
+import { HeaderActions } from "@/components/ui/LoginButton";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -161,6 +161,7 @@ export default function DashboardPage() {
     return () => subscription.unsubscribe();
   }, [supabase]);
 
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const verifyFileInputRef = useRef<HTMLInputElement>(null);
@@ -716,7 +717,23 @@ export default function DashboardPage() {
 
           {/* ═══════ Report Issue Dialog ═══════ */}
           <div className="flex items-center gap-2 md:gap-3">
-            <LoginButton />
+            <HeaderActions 
+              onReportClick={() => {
+                if (session && reportCooldown === 0) {
+                  setDialogOpen(true);
+                } else if (!session) {
+                  alert("Please sign in to report an issue and earn Civic Points!");
+                } else {
+                  alert(`Please wait ${reportCooldown}s before reporting again.`);
+                }
+              }}
+              onHowItWorksClick={() => setShowHowItWorks(true)}
+              onSeverityScaleClick={() => setMobileView('map')}
+              onSeveritySelect={(severity) => {
+                setMobileView('map');
+                handleDockClick(severity);
+              }}
+            />
             <Dialog
               open={dialogOpen}
               onOpenChange={(open) => {
@@ -724,30 +741,6 @@ export default function DashboardPage() {
                 if (!open) resetForm();
               }}
             >
-              <span title={!session ? "Login to earn Civic Points" : reportCooldown > 0 ? "Please wait before reporting again" : ""}>
-                <DialogTrigger
-                  render={
-                    <Button 
-                      disabled={!session || reportCooldown > 0}
-                      className="bg-teal-400 text-[#0f1117] font-bold font-display hover:bg-teal-300 transition-colors cursor-pointer gap-1 md:gap-2 px-2 md:px-4 py-2 h-9 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-400 disabled:shadow-none"
-                    >
-                      {reportCooldown > 0 ? (
-                        <>
-                          <Timer className="size-4" />
-                          <span className="hidden sm:inline">Wait {reportCooldown}s</span>
-                          <span className="sm:hidden">{reportCooldown}s</span>
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="size-4" />
-                          <span className="hidden sm:inline">Report Issue</span>
-                          <span className="sm:hidden">Report</span>
-                        </>
-                      )}
-                    </Button>
-                  }
-                />
-              </span>
 
             <DialogContent className="sm:max-w-lg bg-[#0a0a0a] border border-white/10 text-slate-100 ring-0">
               <DialogHeader>
@@ -1137,7 +1130,7 @@ export default function DashboardPage() {
             <LeafletMap reports={filteredReports} viewMode={viewMode} focusCoords={focusedCoords} emphasizedSeverity={emphasizedSeverity} />
 
             {/* Map overlay legend */}
-            <div className="absolute bottom-[88px] left-1/2 -translate-x-1/2 md:bottom-6 md:left-6 md:translate-x-0 w-max z-10 flex items-center gap-4 rounded-xl border border-slate-800 bg-slate-950/90 px-5 py-3 backdrop-blur-lg shadow-2xl transform-gpu">
+            <div className="hidden md:flex absolute bottom-[88px] left-1/2 -translate-x-1/2 md:bottom-6 md:left-6 md:translate-x-0 w-max z-10 items-center gap-4 rounded-xl border border-slate-800 bg-slate-950/90 px-5 py-3 backdrop-blur-lg shadow-2xl transform-gpu">
               {viewMode === "active" ? (
                 <>
                   <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider mr-2">
@@ -1227,6 +1220,65 @@ export default function DashboardPage() {
             </div>
           </motion.section>
         </motion.div>
+
+        {/* ═══════════════════ HOW IT WORKS DIALOG ═══════════════════ */}
+        <Dialog open={showHowItWorks} onOpenChange={setShowHowItWorks}>
+          <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto bg-[#0a0a0a] border border-white/10 text-slate-100 ring-0">
+            <DialogHeader>
+              <DialogTitle className="text-slate-50 text-lg">
+                <span className="flex items-center gap-2">
+                  <span className="text-xl">✨</span> How CivicPulse Works
+                </span>
+              </DialogTitle>
+              <DialogDescription className="text-slate-400 mt-1">
+                Join the community effort to clean up our city. Report issues, verify fixes, and earn Civic Points!
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-5 py-4">
+              <div className="space-y-3">
+                <h4 className="text-teal-400 font-semibold text-sm uppercase tracking-wider flex items-center gap-2">
+                  <span className="size-2 rounded-full bg-teal-400" />
+                  Earning Points
+                </h4>
+                <ul className="space-y-2 text-sm text-slate-300">
+                  <li className="flex gap-2.5">
+                    <span className="text-teal-400 font-bold w-12 shrink-0">+10 pt</span>
+                    <span>Reporting a new verified issue (e.g. potholes, broken lights).</span>
+                  </li>
+                  <li className="flex gap-2.5">
+                    <span className="text-teal-400 font-bold w-12 shrink-0">+5 pt</span>
+                    <span>Successfully verifying a fix with a clear photo.</span>
+                  </li>
+                  <li className="flex gap-2.5">
+                    <span className="text-rose-400 font-bold w-12 shrink-0">-15 pt</span>
+                    <span>Uploading fake images, stock photos, or unrelated content.</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="text-indigo-400 font-semibold text-sm uppercase tracking-wider flex items-center gap-2">
+                  <span className="size-2 rounded-full bg-indigo-400" />
+                  Photo Guidelines
+                </h4>
+                <div className="bg-slate-900/50 rounded-xl p-4 border border-white/5">
+                  <ol className="list-decimal list-inside space-y-2 text-sm text-slate-300 marker:text-indigo-400 marker:font-bold">
+                    <li><strong className="text-white">Real-time only:</strong> Take photos right at the location.</li>
+                    <li><strong className="text-white">Clear context:</strong> Ensure the surrounding area is visible.</li>
+                    <li><strong className="text-white">No screens:</strong> AI rejects photos of other screens.</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+            
+            <DialogFooter className="bg-transparent border-slate-800">
+              <Button onClick={() => setShowHowItWorks(false)} className="w-full bg-slate-800 hover:bg-slate-700 text-white font-semibold">
+                Got it!
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* ═══════════════════ VERIFICATION DIALOG ═══════════════════ */}
         <Dialog
@@ -1427,8 +1479,6 @@ export default function DashboardPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Smooth blur fade for the scrollable feed */}
-        <GradualBlur preset="bottom" height="4rem" zIndex={20} className="pointer-events-none transform-gpu" />
 
         {/* Mobile Floating Actions: Map Toggle & Bubble Menu */}
         <div className="md:hidden">
