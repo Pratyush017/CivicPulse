@@ -715,7 +715,7 @@ export default function DashboardPage() {
           </div>
 
           {/* ═══════ Report Issue Dialog ═══════ */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             <LoginButton />
             <Dialog
               open={dialogOpen}
@@ -729,7 +729,7 @@ export default function DashboardPage() {
                   render={
                     <Button 
                       disabled={!session || reportCooldown > 0}
-                      className="bg-teal-400 text-[#0f1117] font-bold font-display hover:bg-teal-300 transition-colors cursor-pointer gap-2 px-2 sm:px-4 py-2 h-9 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-400 disabled:shadow-none"
+                      className="bg-teal-400 text-[#0f1117] font-bold font-display hover:bg-teal-300 transition-colors cursor-pointer gap-1 md:gap-2 px-2 md:px-4 py-2 h-9 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-400 disabled:shadow-none"
                     >
                       {reportCooldown > 0 ? (
                         <>
@@ -1137,7 +1137,7 @@ export default function DashboardPage() {
             <LeafletMap reports={filteredReports} viewMode={viewMode} focusCoords={focusedCoords} emphasizedSeverity={emphasizedSeverity} />
 
             {/* Map overlay legend */}
-            <div className="absolute bottom-6 left-6 z-10 flex items-center gap-4 rounded-xl border border-slate-800 bg-slate-950/90 px-5 py-3 backdrop-blur-lg shadow-2xl">
+            <div className="absolute bottom-[88px] left-1/2 -translate-x-1/2 md:bottom-6 md:left-6 md:translate-x-0 w-max z-10 flex items-center gap-4 rounded-xl border border-slate-800 bg-slate-950/90 px-5 py-3 backdrop-blur-lg shadow-2xl transform-gpu">
               {viewMode === "active" ? (
                 <>
                   <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider mr-2">
@@ -1428,12 +1428,12 @@ export default function DashboardPage() {
         </Dialog>
 
         {/* Smooth blur fade for the scrollable feed */}
-        <GradualBlur preset="bottom" height="4rem" zIndex={20} className="pointer-events-none" />
+        <GradualBlur preset="bottom" height="4rem" zIndex={20} className="pointer-events-none transform-gpu" />
 
         {/* Mobile Floating Actions: Map Toggle & Bubble Menu */}
         <div className="md:hidden">
           {/* Bubble Menu Toggle (Bottom Left) */}
-          <div className="fixed bottom-[88px] sm:bottom-6 left-6 z-[100]">
+          <div className="fixed bottom-6 left-6 z-[100]">
             <BubbleMenu 
               logo={null}
               className="relative top-0 left-0 right-0 p-0 m-0 border-none justify-start"
@@ -1494,7 +1494,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Bottom Navigation for Feed/Map */}
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-1.5 p-1.5 bg-[#0a0f1a]/80 backdrop-blur-xl border border-[#1e293b]/50 rounded-2xl shadow-2xl">
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-1.5 p-1.5 bg-[#0a0f1a]/80 backdrop-blur-xl border border-[#1e293b]/50 rounded-2xl shadow-2xl transform-gpu">
             <button 
               onClick={() => setMobileView('feed')} 
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-300 font-semibold tracking-wide ${mobileView === 'feed' ? 'bg-cyan-500/20 text-cyan-400 shadow-[inset_0_0_12px_rgba(6,182,212,0.3)]' : 'text-slate-400 hover:text-slate-200'}`}

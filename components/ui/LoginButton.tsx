@@ -77,8 +77,8 @@ export function LoginButton() {
     const initial = name.charAt(0).toUpperCase();
 
     return (
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-2 md:gap-4">
+        <div className="flex items-center gap-2 md:gap-2.5">
           {profile?.avatar_url ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
@@ -91,7 +91,7 @@ export function LoginButton() {
               {initial}
             </div>
           )}
-          <div className="flex flex-col">
+          <div className="hidden md:flex flex-col">
             <span className="text-[13px] font-semibold text-[#e8eaf0] leading-tight">
               {name}
             </span>
