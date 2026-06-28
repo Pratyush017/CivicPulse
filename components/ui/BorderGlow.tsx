@@ -202,11 +202,14 @@ const BorderGlow: React.FC<BorderGlowProps> = ({
 
   const colorSensitivity = edgeSensitivity + 20;
   const isVisible = isHovered || sweepActive;
+  const denomColor = 100 - colorSensitivity === 0 ? 0.01 : 100 - colorSensitivity;
   const borderOpacity = isVisible
-    ? Math.max(0, (edgeProximity * 100 - colorSensitivity) / (100 - colorSensitivity))
+    ? Math.max(0, (edgeProximity * 100 - colorSensitivity) / denomColor)
     : 0;
+    
+  const denomGlow = 100 - edgeSensitivity === 0 ? 0.01 : 100 - edgeSensitivity;
   const glowOpacity = isVisible
-    ? Math.max(0, (edgeProximity * 100 - edgeSensitivity) / (100 - edgeSensitivity))
+    ? Math.max(0, (edgeProximity * 100 - edgeSensitivity) / denomGlow)
     : 0;
 
   const meshGradients = buildMeshGradients(colors);
