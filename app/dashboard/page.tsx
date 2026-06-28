@@ -1031,7 +1031,10 @@ export default function DashboardPage() {
                             color={starColor}
                             className="w-full h-full"
                             innerClassName={`bg-[#0a0a0a] rounded-[20px] overflow-hidden hover:bg-[#111111] transition-colors cursor-pointer flex flex-col w-full h-full`}
-                            onClick={() => setFocusedCoords({ lat: report.latitude, lng: report.longitude })}
+                            onClick={() => {
+                              setFocusedCoords({ lat: report.latitude, lng: report.longitude });
+                              setMobileView('map');
+                            }}
                           >
                             {/* Top content */}
                       <div className="flex gap-3 p-3.5 pb-0">

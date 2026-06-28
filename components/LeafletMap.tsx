@@ -77,21 +77,27 @@ export default function LeafletMap({ reports, viewMode = "active", focusCoords =
     const map = mapRef.current;
     if (!map || !focusCoords) return;
 
-    map.flyTo([focusCoords.lat, focusCoords.lng], 16, {
-      animate: true,
-      duration: 1.5,
-    });
+    // Invalidate size in case the map was hidden (e.g. on mobile) and just became visible
+    map.invalidateSize();
 
-    // Open the popup for the matching marker
-    Object.values(markersRef.current).forEach((marker) => {
-      const latlng = marker.getLatLng();
-      if (
-        Math.abs(latlng.lat - focusCoords.lat) < 0.0001 &&
-        Math.abs(latlng.lng - focusCoords.lng) < 0.0001
-      ) {
-        setTimeout(() => marker.openPopup(), 800);
-      }
-    });
+    // Small timeout to let layout settle before flying
+    setTimeout(() => {
+      map.flyTo([focusCoords.lat, focusCoords.lng], 16, {
+        animate: true,
+        duration: 1.5,
+      });
+
+      // Open the popup for the matching marker
+      Object.values(markersRef.current).forEach((marker) => {
+        const latlng = marker.getLatLng();
+        if (
+          Math.abs(latlng.lat - focusCoords.lat) < 0.0001 &&
+          Math.abs(latlng.lng - focusCoords.lng) < 0.0001
+        ) {
+          setTimeout(() => marker.openPopup(), 1500);
+        }
+      });
+    }, 100);
   }, [focusCoords]);
 
   // Sync markers when reports, viewMode, or emphasizedSeverity changes
@@ -175,7 +181,7 @@ export default function LeafletMap({ reports, viewMode = "active", focusCoords =
               ? `<img src="${report.image_url}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 6px; margin-bottom: 8px;" alt="Issue" />`
               : ""
           }
-          <p style="margin: 0; font-size: 12px; color: #475569; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${report.description}</p>
+          <p style="margin: 0; font-size: 12px; color: #475569; overflow: visible;">${report.description}</p>
         </div>
       `);
 
