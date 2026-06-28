@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
+import { SlidersHorizontal } from 'lucide-react';
 
 type MenuItem = {
   label: string | ReactNode;
@@ -51,7 +52,7 @@ export default function BubbleMenu({
   items,
   animationEase = 'back.out(1.5)',
   animationDuration = 0.5,
-  staggerDelay = 0.12
+  staggerDelay = 0.35
 }: BubbleMenuProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showOverlay, setShowOverlay] = useState(false);
@@ -102,17 +103,24 @@ export default function BubbleMenu({
 
       bubbles.forEach((bubble, i) => {
         const delay = i * staggerDelay + gsap.utils.random(-0.05, 0.05);
+        
+        // Generate random target scale and rotation for organic bubble feel
+        const targetScale = gsap.utils.random(0.85, 1.15);
+        const targetRot = gsap.utils.random(-15, 15);
+        
         const tl = gsap.timeline({ delay });
         tl.to(bubble, {
-          scale: 1,
+          scale: targetScale,
+          rotation: targetRot,
           duration: animationDuration,
           ease: animationEase,
           onComplete: () => {
-            // Add continuous floating animation
+            // Add continuous floating animation from the new base rotation and scale
             gsap.to(bubble, {
               y: 'random(-10, 10)',
               x: 'random(-10, 10)',
-              rotation: 'random(-8, 8)',
+              rotation: `random(${targetRot - 8}, ${targetRot + 8})`,
+              scale: `random(${targetScale - 0.05}, ${targetScale + 0.05})`,
               duration: 'random(2, 4)',
               repeat: -1,
               yoyo: true,
@@ -278,37 +286,19 @@ export default function BubbleMenu({
             isMenuOpen ? 'open' : '',
             'inline-flex flex-col items-center justify-center',
             'rounded-full',
-            'bg-[#050505]',
+            'bg-teal-500/12',
+            'backdrop-blur-md',
             'shadow-[0_4px_16px_rgba(0,0,0,0.12)]',
             'pointer-events-auto',
             'w-9 h-9',
-            'border border-slate-800 cursor-pointer p-0 hover:bg-slate-900 transition-colors',
+            'border border-teal-500/25 cursor-pointer p-0 hover:bg-teal-500/20 transition-colors',
             'will-change-transform'
           ].join(' ')}
           onClick={handleToggle}
           aria-label={menuAriaLabel}
           aria-pressed={isMenuOpen}
-          style={{ background: menuBg }}
         >
-          <span
-            className="menu-line block mx-auto rounded-[2px]"
-            style={{
-              width: 18,
-              height: 2,
-              background: menuContentColor,
-              transform: isMenuOpen ? 'translateY(4px) rotate(45deg)' : 'none'
-            }}
-          />
-          <span
-            className="menu-line short block mx-auto rounded-[2px]"
-            style={{
-              marginTop: '6px',
-              width: 18,
-              height: 2,
-              background: menuContentColor,
-              transform: isMenuOpen ? 'translateY(-4px) rotate(-45deg)' : 'none'
-            }}
-          />
+          <SlidersHorizontal className={`size-[18px] text-teal-400 transition-transform duration-300 ${isMenuOpen ? 'rotate-90' : ''}`} />
         </button>
       </nav>
 

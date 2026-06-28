@@ -3,7 +3,6 @@
 import type { CSSProperties, ReactNode } from 'react';
 import React, { useCallback, useLayoutEffect, useRef, useState, useEffect } from 'react';
 import { gsap } from 'gsap';
-import DecryptedText from './DecryptedText';
 
 export interface StaggeredMenuItem {
   label: string;
@@ -431,7 +430,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
         >
           <span
             ref={textWrapRef}
-            className="sm-toggle-textWrap relative inline-block h-[1em] overflow-hidden whitespace-nowrap w-[var(--sm-toggle-width,auto)] min-w-[var(--sm-toggle-width,auto)]"
+            className="sm-toggle-textWrap hidden sm:inline-block relative h-[1em] overflow-hidden whitespace-nowrap w-[var(--sm-toggle-width,auto)] min-w-[var(--sm-toggle-width,auto)]"
             aria-hidden="true"
           >
             <span ref={textInnerRef} className="sm-toggle-textInner flex flex-col leading-none">
@@ -476,7 +475,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
                 items.map((it, idx) => (
                   <li className="sm-panel-itemWrap relative overflow-hidden leading-none py-1" key={it.label + idx}>
                       <button
-                        className="sm-panel-item relative text-white font-bold text-3xl md:text-5xl cursor-pointer leading-none tracking-[-1px] md:tracking-[-2px] uppercase transition-[background,color] duration-150 ease-linear inline-block no-underline pr-[1.4em] text-left bg-transparent border-0 hover:text-teal-400"
+                        className="sm-panel-item group relative text-white font-bold text-3xl md:text-5xl cursor-pointer leading-none tracking-[-1px] md:tracking-[-2px] uppercase inline-block no-underline pr-[1.4em] text-left bg-transparent border-0"
                         onClick={() => {
                           if (it.action) {
                             it.action();
@@ -487,7 +486,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
                         }}
                         aria-label={it.ariaLabel}
                       >
-                        <span className="sm-panel-itemLabel inline-block [transform-origin:50%_100%] will-change-transform">
+                        <span className="sm-panel-itemLabel inline-flex items-center [transform-origin:50%_100%] will-change-transform">
                           {it.color && (
                             <span 
                               className="mr-3 md:mr-4 inline-block animate-[pulse_2s_ease-in-out_infinite]" 
@@ -496,7 +495,14 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
                               •
                             </span>
                           )}
-                          <DecryptedText text={it.label} speed={50} maxIterations={12} animateOn="hover" />
+                          <span className="relative inline-flex flex-col h-[1em] overflow-hidden">
+                            <span className="relative z-[2] inline-block leading-none transition-transform duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:-translate-y-full">
+                              {it.label}
+                            </span>
+                            <span className="absolute left-0 top-0 z-[3] inline-block leading-none translate-y-full transition-transform duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:translate-y-0 text-teal-400" aria-hidden="true">
+                              {it.label}
+                            </span>
+                          </span>
                         </span>
                       </button>
                   </li>

@@ -119,7 +119,7 @@ export function HeaderActions({
             </div>
           )}
           <div className="flex flex-col">
-            <span className="text-[13px] font-semibold text-[#e8eaf0] leading-tight">
+            <span className="hidden sm:block text-[13px] font-semibold text-[#e8eaf0] leading-tight">
               {session.user.user_metadata.full_name || session.user.email || "User"}
             </span>
             <span className="text-[11px] font-medium text-teal-400 leading-tight mt-0.5">

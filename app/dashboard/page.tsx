@@ -51,6 +51,8 @@ import {
 } from "@/components/ui/dialog";
 import { Toast } from "@/components/Toast";
 import GradualBlur from "@/components/ui/GradualBlur";
+import { StaggeredMenu } from "@/components/ui/StaggeredMenu";
+import AnimatedItem from "@/components/ui/AnimatedItem";
 import StarBorder from "@/components/ui/StarBorder";
 import TiltedCard from "@/components/ui/TiltedCard";
 import BorderGlow from "@/components/ui/BorderGlow";
@@ -671,7 +673,7 @@ export default function DashboardPage() {
                   {/* Invisible placeholder for the floating logo */}
                   <div className="w-[120px] h-[28px]" />
               </div>
-              <p className="text-[9px] md:text-[11px] text-[#7a8199] tracking-wide leading-tight">Community Issue Tracker</p>
+              <p className="hidden sm:block text-[9px] md:text-[11px] text-[#7a8199] tracking-wide leading-tight">Community Issue Tracker</p>
             </div>
           </div>
 
@@ -963,7 +965,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
               ) : (
-                filteredReports.map((report) => {
+                filteredReports.map((report, index) => {
                   let severityConfig: Record<string, string> = {
                     border: 'border-l-teal-400',
                     tag: 'bg-teal-500/12 text-teal-400',
@@ -998,9 +1000,9 @@ export default function DashboardPage() {
                                       : false;
 
                   return (
-                    <TiltedCard
-                      key={report.id}
-                      className="mb-3 last:mb-0 w-full"
+                    <AnimatedItem key={report.id} index={index} delay={index * 0.05}>
+                      <TiltedCard
+                        className="w-full"
                       imageSrc=""
                       containerHeight="auto"
                       containerWidth="100%"
@@ -1116,6 +1118,7 @@ export default function DashboardPage() {
                     </BorderGlow>
                   }
                 />
+              </AnimatedItem>
               );
             })
               )}
