@@ -444,7 +444,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
 
           <span
             ref={iconRef}
-            className="sm-icon relative w-[14px] h-[14px] shrink-0 inline-flex items-center justify-center [will-change:transform]"
+            className="sm-icon absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 sm:relative sm:left-auto sm:top-auto sm:translate-x-0 sm:translate-y-0 w-[14px] h-[14px] shrink-0 inline-flex items-center justify-center [will-change:transform]"
             aria-hidden="true"
           >
             <span
@@ -495,11 +495,11 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
                               •
                             </span>
                           )}
-                          <span className="relative inline-flex flex-col h-[1em] overflow-hidden">
-                            <span className="relative z-[2] inline-block leading-none transition-transform duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:-translate-y-full">
+                          <span className="relative inline-flex flex-col h-[1em] overflow-hidden whitespace-nowrap">
+                            <span className="relative z-[2] inline-block leading-none whitespace-nowrap transition-transform duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:-translate-y-full">
                               {it.label}
                             </span>
-                            <span className="absolute left-0 top-0 z-[3] inline-block leading-none translate-y-full transition-transform duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:translate-y-0 text-teal-400" aria-hidden="true">
+                            <span className="absolute left-0 top-0 z-[3] inline-block leading-none whitespace-nowrap translate-y-full transition-transform duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:translate-y-0 text-teal-400" aria-hidden="true">
                               {it.label}
                             </span>
                           </span>

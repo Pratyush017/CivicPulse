@@ -204,3 +204,29 @@ body {
 .dot-active   { animation: dot-breathe 2s ease-in-out infinite; }
 .dot-critical { animation: dot-blink 1.8s ease-in-out infinite; }
 .pulse-ring   { animation: pulse-ring 2.4s ease-out infinite; }
+
+/* Custom Global Dark Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0f1a;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1e293b #0a0f1a;
+}
+
+@utility no-scrollbar {
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
