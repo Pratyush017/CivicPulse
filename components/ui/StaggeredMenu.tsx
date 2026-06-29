@@ -103,8 +103,20 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
         gsap.set(preContainer, { xPercent: 0, opacity: 1 });
       }
 
-      gsap.set(plusH, { transformOrigin: '50% 50%', rotate: 0 });
-      gsap.set(plusV, { transformOrigin: '50% 50%', rotate: 90 });
+      gsap.set([plusH, plusV], {
+        xPercent: -50,
+        yPercent: -50,
+        transformOrigin: "50% 50%",
+      });
+
+      gsap.set(plusH, {
+        rotate: 0,
+      });
+
+      gsap.set(plusV, {
+        rotate: 90,
+      });
+
       gsap.set(icon, { rotate: 0, transformOrigin: '50% 50%' });
 
       gsap.set(textInner, { yPercent: 0 });
@@ -419,9 +431,8 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
 
         <button
           ref={toggleBtnRef}
-          className={`sm-toggle relative z-[20] flex items-center justify-center gap-0 sm:gap-1.5 size-11 sm:size-auto sm:px-5 sm:py-3 rounded-full bg-[#0a0f1a]/80 backdrop-blur-md border border-[#1e293b] cursor-pointer font-medium leading-none overflow-visible pointer-events-auto shadow-xl transition-all hover:bg-[#111827] ${
-            open ? 'text-black !bg-white/90 !border-white/20 hover:!bg-white' : 'text-[#e9e9ef]'
-          }`}
+          className={`sm-toggle relative z-[20] inline-flex items-center justify-center gap-0 sm:gap-1.5 w-11 h-11 sm:w-auto sm:h-auto sm:px-5 sm:py-3 rounded-full bg-[#0a0f1a]/80 backdrop-blur-md border border-[#1e293b] cursor-pointer font-medium leading-none overflow-visible pointer-events-auto shadow-xl transition-all hover:bg-[#111827] ${open ? 'text-black !bg-white/90 !border-white/20 hover:!bg-white' : 'text-[#e9e9ef]'
+            }`}
           aria-label={open ? 'Close menu' : 'Open menu'}
           aria-expanded={open}
           aria-controls="staggered-menu-panel"
@@ -449,11 +460,11 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
           >
             <span
               ref={plusHRef}
-              className="sm-icon-line absolute left-1/2 top-1/2 w-full h-[2px] bg-current rounded-[2px] -translate-x-1/2 -translate-y-1/2 [will-change:transform]"
+              className="sm-icon-line absolute left-1/2 top-1/2 w-full h-[2px] bg-current rounded-[2px] [will-change:transform]"
             />
             <span
               ref={plusVRef}
-              className="sm-icon-line sm-icon-line-v absolute left-1/2 top-1/2 w-full h-[2px] bg-current rounded-[2px] -translate-x-1/2 -translate-y-1/2 [will-change:transform]"
+              className="sm-icon-line sm-icon-line-v absolute left-1/2 top-1/2 w-full h-[2px] bg-current rounded-[2px] [will-change:transform]"
             />
           </span>
         </button>
@@ -474,37 +485,37 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
               {items && items.length ? (
                 items.map((it, idx) => (
                   <li className="sm-panel-itemWrap relative overflow-hidden leading-none py-1" key={it.label + idx}>
-                      <button
-                        className="sm-panel-item group relative text-white font-bold text-3xl md:text-5xl cursor-pointer leading-none tracking-[-1px] md:tracking-[-2px] uppercase inline-block no-underline pr-[1.4em] text-left bg-transparent border-0"
-                        onClick={() => {
-                          if (it.action) {
-                            it.action();
-                            if (!it.preventClose) closeMenu();
-                          } else if (it.link) {
-                            window.location.href = it.link;
-                          }
-                        }}
-                        aria-label={it.ariaLabel}
-                      >
-                        <span className="sm-panel-itemLabel inline-flex items-center [transform-origin:50%_100%] will-change-transform">
-                          {it.color && (
-                            <span 
-                              className="mr-3 md:mr-4 inline-block animate-[pulse_2s_ease-in-out_infinite]" 
-                              style={{ color: it.color }}
-                            >
-                              •
-                            </span>
-                          )}
-                          <span className="relative inline-flex flex-col h-[1em] overflow-hidden whitespace-nowrap">
-                            <span className="relative z-[2] inline-block leading-none whitespace-nowrap transition-transform duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:-translate-y-full">
-                              {it.label}
-                            </span>
-                            <span className="absolute left-0 top-0 z-[3] inline-block leading-none whitespace-nowrap translate-y-full transition-transform duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:translate-y-0 text-teal-400" aria-hidden="true">
-                              {it.label}
-                            </span>
+                    <button
+                      className="sm-panel-item group relative text-white font-bold text-3xl md:text-5xl cursor-pointer leading-none tracking-[-1px] md:tracking-[-2px] uppercase inline-block no-underline pr-[1.4em] text-left bg-transparent border-0"
+                      onClick={() => {
+                        if (it.action) {
+                          it.action();
+                          if (!it.preventClose) closeMenu();
+                        } else if (it.link) {
+                          window.location.href = it.link;
+                        }
+                      }}
+                      aria-label={it.ariaLabel}
+                    >
+                      <span className="sm-panel-itemLabel inline-flex items-center [transform-origin:50%_100%] will-change-transform">
+                        {it.color && (
+                          <span
+                            className="mr-3 md:mr-4 inline-block animate-[pulse_2s_ease-in-out_infinite]"
+                            style={{ color: it.color }}
+                          >
+                            •
+                          </span>
+                        )}
+                        <span className="relative inline-flex flex-col h-[1em] overflow-hidden whitespace-nowrap">
+                          <span className="relative z-[2] inline-block leading-none whitespace-nowrap transition-transform duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:-translate-y-full">
+                            {it.label}
+                          </span>
+                          <span className="absolute left-0 top-0 z-[3] inline-block leading-none whitespace-nowrap translate-y-full transition-transform duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:translate-y-0 text-teal-400" aria-hidden="true">
+                            {it.label}
                           </span>
                         </span>
-                      </button>
+                      </span>
+                    </button>
                   </li>
                 ))
               ) : (
@@ -530,7 +541,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
 .sm-scope .sm-toggle-line { display: block; height: 1em; line-height: 1; }
 .sm-scope .sm-icon { position: relative; width: 14px; height: 14px; flex: 0 0 14px; display: inline-flex; align-items: center; justify-content: center; will-change: transform; }
 .sm-scope .sm-panel-itemWrap { position: relative; overflow: hidden; line-height: 1; }
-.sm-scope .sm-icon-line { position: absolute; left: 50%; top: 50%; width: 100%; height: 2px; background: currentColor; border-radius: 2px; transform: translate(-50%, -50%); will-change: transform; }
+.sm-scope .sm-icon-line { position: absolute; left: 50%; top: 50%; width: 14px; height: 2px; background: currentColor; border-radius: 9999px; transform: translate(-50%, -50%); will-change: transform; }
 .sm-scope .staggered-menu-panel { position: fixed; top: 0; right: 0; width: clamp(280px, 40vw, 480px); height: 100%; display: flex; flex-direction: column; padding: 7em 2.5em 2.5em 2.5em; overflow-y: auto; z-index: 10; }
 .sm-scope [data-position='left'] .staggered-menu-panel { right: auto; left: 0; }
 .sm-scope .sm-prelayers { position: fixed; top: 0; right: 0; bottom: 0; width: clamp(280px, 40vw, 480px); pointer-events: none; z-index: 5; }
@@ -543,6 +554,8 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
 .sm-scope .sm-panel-list[data-numbering] { counter-reset: smItem; }
 .sm-scope .sm-panel-list[data-numbering] .sm-panel-itemWrap::after { counter-increment: smItem; content: counter(smItem, decimal-leading-zero); position: absolute; top: 0.25em; right: 1em; font-size: 18px; font-weight: 500; color: var(--sm-accent, #2dd4bf); letter-spacing: 0; pointer-events: none; user-select: none; opacity: var(--sm-num-opacity, 0); transition: opacity 0.3s; }
 @media (max-width: 1024px) { .sm-scope .staggered-menu-panel { width: 100%; left: 0; right: 0; padding: 7em 2em 2em 2em; } .sm-scope .sm-prelayers { width: 100%; left: 0; right: 0; } }
+
+.sm-scope .sm-icon-line-v { transform: translate(-50%, -50%) rotate(90deg); }
       `}</style>
     </div>
   );
