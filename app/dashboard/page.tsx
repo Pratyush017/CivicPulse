@@ -910,7 +910,7 @@ export default function DashboardPage() {
           className="flex flex-col md:flex-row flex-1 w-full overflow-hidden"
         >
             {/* ────────── LEFT COLUMN: Report Feed (35%) ────────── */}
-            <motion.aside variants={itemVariants} className={`w-full md:w-[400px] lg:w-[450px] ${mobileView === 'feed' ? 'flex' : 'hidden md:flex'} h-full overflow-y-auto no-scrollbar z-10 bg-black flex-col border-r border-[#252d45] shadow-2xl relative`}>
+            <motion.aside variants={itemVariants} className={`w-full md:w-[400px] lg:w-[450px] ${mobileView === 'feed' ? 'flex' : 'hidden md:flex'} h-full overflow-x-hidden z-10 bg-black flex-col border-r border-[#252d45] shadow-2xl relative`}>
             <div className="flex items-center border-b border-[#252d45] gap-4 px-6 pt-3 pb-3">
               <GooeyNav
                 initialActiveIndex={viewMode === 'active' ? 0 : 1}
@@ -938,7 +938,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Scrollable feed */}
-            <div className="flex-1 overflow-y-auto no-scrollbar px-4 pt-3 pb-24 space-y-3">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar px-4 pt-3 pb-24 space-y-3">
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-3">
                   <Loader2 className="size-8 animate-spin text-cyan-500" />
