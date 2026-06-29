@@ -74,30 +74,39 @@ export default function LeafletMap({ reports, viewMode = "active", focusCoords =
 
   // Fly to focused coordinates
   useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !focusCoords) return;
-
-    // Invalidate size in case the map was hidden (e.g. on mobile) and just became visible
-    map.invalidateSize();
+    if (!focusCoords) return;
 
     // Small timeout to let layout settle before flying
-    setTimeout(() => {
-      map.flyTo([focusCoords.lat, focusCoords.lng], 16, {
-        animate: true,
-        duration: 1.5,
-      });
+    const timeoutId = setTimeout(() => {
+      const map = mapRef.current;
+      if (!map) return;
 
-      // Open the popup for the matching marker
-      Object.values(markersRef.current).forEach((marker) => {
-        const latlng = marker.getLatLng();
-        if (
-          Math.abs(latlng.lat - focusCoords.lat) < 0.0001 &&
-          Math.abs(latlng.lng - focusCoords.lng) < 0.0001
-        ) {
-          setTimeout(() => marker.openPopup(), 1500);
-        }
-      });
-    }, 100);
+      // Invalidate size in case the map was hidden (e.g. on mobile) and just became visible
+      map.invalidateSize();
+
+      try {
+        map.flyTo([focusCoords.lat, focusCoords.lng], 16, {
+          animate: true,
+          duration: 1.5,
+        });
+
+        // Open the popup for the matching marker
+        Object.values(markersRef.current).forEach((marker) => {
+          const latlng = marker.getLatLng();
+          if (
+            Math.abs(latlng.lat - focusCoords.lat) < 0.0001 &&
+            Math.abs(latlng.lng - focusCoords.lng) < 0.0001
+          ) {
+            setTimeout(() => marker.openPopup(), 1500);
+          }
+        });
+      } catch (e) {
+        console.warn("Leaflet flyTo failed (likely layout shift), falling back to setView", e);
+        map.setView([focusCoords.lat, focusCoords.lng], 16);
+      }
+    }, 150);
+
+    return () => clearTimeout(timeoutId);
   }, [focusCoords]);
 
   // Sync markers when reports, viewMode, or emphasizedSeverity changes
@@ -174,14 +183,14 @@ export default function LeafletMap({ reports, viewMode = "active", focusCoords =
 
       marker.bindPopup(`
         <div style="font-family: inherit; padding: 4px;">
-          <h3 style="margin: 0 0 4px 0; font-size: 14px; font-weight: 600; color: #1e293b;">${report.title}</h3>
-          <p style="margin: 0 0 8px 0; font-size: 12px; color: #64748b;">${statusLabel}</p>
+          <h3 style="margin: 0 0 4px 0; font-size: 15px; font-weight: 700; color: #f1f5f9; line-height: 1.3;">${report.title}</h3>
+          <p style="margin: 0 0 8px 0; font-size: 12px; color: #94a3b8;">${statusLabel}</p>
           ${
             report.image_url
               ? `<img src="${report.image_url}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 6px; margin-bottom: 8px;" alt="Issue" />`
               : ""
           }
-          <p style="margin: 0; font-size: 12px; color: #475569; overflow: visible;">${report.description}</p>
+          <p style="margin: 0; font-size: 13px; color: #cbd5e1; line-height: 1.5; overflow: visible;">${report.description}</p>
         </div>
       `);
 
