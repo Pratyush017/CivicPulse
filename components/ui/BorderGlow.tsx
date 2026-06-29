@@ -121,6 +121,14 @@ const BorderGlow: React.FC<BorderGlowProps> = ({
   const [cursorAngle, setCursorAngle] = useState(45);
   const [edgeProximity, setEdgeProximity] = useState(0);
   const [sweepActive, setSweepActive] = useState(false);
+  
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 768);
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const getCenterOfElement = useCallback((el: HTMLElement) => {
     const { width, height } = el.getBoundingClientRect();
@@ -150,7 +158,7 @@ const BorderGlow: React.FC<BorderGlowProps> = ({
   }, [getCenterOfElement]);
 
   const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    if (disableCursorTracking) return;
+    if (disableCursorTracking || isMobile) return;
     const card = cardRef.current;
     if (!card) return;
     const rect = card.getBoundingClientRect();
@@ -222,6 +230,7 @@ const BorderGlow: React.FC<BorderGlowProps> = ({
       ref={cardRef}
       onPointerMove={handlePointerMove}
       onPointerEnter={() => {
+        if (isMobile) return;
         setIsHovered(true);
         if (animateOnHover && !sweepActive) {
           if (hoverDelay > 0) {
@@ -234,6 +243,7 @@ const BorderGlow: React.FC<BorderGlowProps> = ({
         }
       }}
       onPointerLeave={() => {
+        if (isMobile) return;
         setIsHovered(false);
         if (hoverTimeoutRef.current) {
           clearTimeout(hoverTimeoutRef.current);

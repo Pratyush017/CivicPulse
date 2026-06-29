@@ -228,11 +228,6 @@ export default function BubbleMenu({
             min-height: auto !important;
             border-radius: 50% !important;
           }
-          .bubble-menu-items .pill-link:hover {
-            transform: scale(1.06);
-            background: var(--hover-bg);
-            color: var(--hover-color);
-          }
           .bubble-menu-items .pill-link:active {
             transform: scale(.94);
           }
