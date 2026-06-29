@@ -419,7 +419,7 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
 
         <button
           ref={toggleBtnRef}
-          className={`sm-toggle relative z-[20] inline-flex items-center gap-[0.3rem] px-5 py-3 rounded-full bg-[#0a0f1a]/80 backdrop-blur-md border border-[#1e293b] cursor-pointer font-medium leading-none overflow-visible pointer-events-auto shadow-xl transition-all hover:bg-[#111827] ${
+          className={`sm-toggle relative z-[20] flex items-center justify-center gap-0 sm:gap-1.5 size-11 sm:size-auto sm:px-5 sm:py-3 rounded-full bg-[#0a0f1a]/80 backdrop-blur-md border border-[#1e293b] cursor-pointer font-medium leading-none overflow-visible pointer-events-auto shadow-xl transition-all hover:bg-[#111827] ${
             open ? 'text-black !bg-white/90 !border-white/20 hover:!bg-white' : 'text-[#e9e9ef]'
           }`}
           aria-label={open ? 'Close menu' : 'Open menu'}
@@ -523,9 +523,9 @@ export const StaggeredMenu: React.FC<StaggeredMenuProps> = ({
 
       <style>{`
 .sm-scope .staggered-menu-wrapper { position: relative; z-index: 40; }
-.sm-scope .sm-toggle { display: inline-flex; align-items: center; gap: 0.5rem; overflow: visible; }
+
 .sm-scope .sm-toggle:focus-visible { outline: 2px solid #ffffffaa; outline-offset: 4px; border-radius: 4px; }
-.sm-scope .sm-toggle-textWrap { position: relative; display: inline-block; height: 1em; overflow: hidden; white-space: nowrap; width: var(--sm-toggle-width, auto); min-width: var(--sm-toggle-width, auto); }
+.sm-scope .sm-toggle-textWrap { position: relative; height: 1em; overflow: hidden; white-space: nowrap; width: var(--sm-toggle-width, auto); min-width: var(--sm-toggle-width, auto); }
 .sm-scope .sm-toggle-textInner { display: flex; flex-direction: column; line-height: 1; }
 .sm-scope .sm-toggle-line { display: block; height: 1em; line-height: 1; }
 .sm-scope .sm-icon { position: relative; width: 14px; height: 14px; flex: 0 0 14px; display: inline-flex; align-items: center; justify-content: center; will-change: transform; }

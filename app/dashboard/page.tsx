@@ -938,7 +938,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Scrollable feed */}
-            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 scrollbar-thin">
+            <div className="flex-1 overflow-y-auto px-4 pt-3 pb-24 space-y-3 scrollbar-thin">
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-3">
                   <Loader2 className="size-8 animate-spin text-cyan-500" />
@@ -1487,9 +1487,9 @@ export default function DashboardPage() {
 
 
         {/* Mobile Floating Actions: Map Toggle & Bubble Menu */}
-        <div className="md:hidden">
+        <div className="md:hidden fixed bottom-6 left-0 w-full px-6 z-[100] flex items-center pointer-events-none">
           {/* Bubble Menu Toggle (Bottom Left) */}
-          <div className="fixed bottom-6 left-6 z-[100]">
+          <div className="pointer-events-auto shrink-0 relative z-[101]">
             <BubbleMenu 
               logo={null}
               className="relative top-0 left-0 right-0 p-0 m-0 border-none justify-start"
@@ -1550,7 +1550,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Bottom Navigation for Feed/Map */}
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-1.5 p-1.5 bg-[#0a0f1a]/80 backdrop-blur-xl border border-[#1e293b]/50 rounded-2xl shadow-2xl transform-gpu">
+          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5 p-1.5 bg-[#0a0f1a]/80 backdrop-blur-xl border border-[#1e293b]/50 rounded-2xl shadow-2xl transform-gpu pointer-events-auto">
             <button 
               onClick={() => setMobileView('feed')} 
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all duration-300 font-semibold tracking-wide ${mobileView === 'feed' ? 'bg-cyan-500/20 text-cyan-400 shadow-[inset_0_0_12px_rgba(6,182,212,0.3)]' : 'text-slate-400 hover:text-slate-200'}`}
