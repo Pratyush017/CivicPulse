@@ -722,7 +722,19 @@ export default function DashboardPage() {
             <HeaderActions 
               onReportClick={() => {
                 if (session && reportCooldown === 0) {
-                  setDialogOpen(true);
+                  setLocationStatus("fetching");
+                  navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                      setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+                      setLocationStatus("success");
+                      setDialogOpen(true);
+                    },
+                    (err) => {
+                      setLocationStatus("error");
+                      alert("You must allow location access to report an issue. Please enable it and try again.");
+                    },
+                    { timeout: 10000 }
+                  );
                 } else if (!session) {
                   alert("Please sign in to report an issue and earn Civic Points!");
                 } else {
@@ -796,18 +808,10 @@ export default function DashboardPage() {
                       <button
                         type="button"
                         onClick={() => cameraInputRef.current?.click()}
-                        className="min-h-[60px] flex-1 flex flex-col items-center justify-center bg-slate-900/50 border border-slate-800 rounded-xl active:bg-slate-800 text-slate-300 gap-2 transition-colors"
+                        className="min-h-[60px] w-full flex flex-col items-center justify-center bg-slate-900/50 border border-slate-800 rounded-xl active:bg-slate-800 text-slate-300 gap-2 transition-colors"
                       >
                         <Camera className="size-5" />
                         <span className="text-sm font-semibold">Take Photo</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => galleryInputRef.current?.click()}
-                        className="min-h-[60px] flex-1 flex flex-col items-center justify-center bg-slate-900/50 border border-slate-800 rounded-xl active:bg-slate-800 text-slate-300 gap-2 transition-colors"
-                      >
-                        <ImageIcon className="size-5" />
-                        <span className="text-sm font-semibold">Gallery</span>
                       </button>
                     </div>
 
@@ -826,7 +830,6 @@ export default function DashboardPage() {
                       ref={galleryInputRef}
                       type="file"
                       accept="image/*"
-                      capture="environment"
                       className="hidden"
                       onChange={(e) =>
                         handleFileChange(e.target.files?.[0] ?? null)
